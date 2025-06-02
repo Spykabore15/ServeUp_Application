@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ServUp - Gestion des Stocks</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="img/logo.png" alt="ServUp Logo" id="navbarLogo">
+        </div>
+        <ul class="nav-links">
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="stocks.html" id="navStocks">Stocks</a></li>
+            <li><a href="employees.html" id="navEmployees">Employés</a></li>
+            <li><a href="orders.html" id="navOrders">Commandes</a></li>
+            <li><a href="suppliers.html" id="navSuppliers">Fournisseurs</a></li>
+            <li><a href="reports.html">Rapports</a></li>
+            <li><a href="settings.html">Paramètres</a></li>
+        </ul>
+        <div class="nav-user">
+            <span id="usernameDisplay"></span>
+            <button id="logoutButton">Déconnexion</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Gestion des Stocks</h1>
+
+        <div id="controlsSection">
+            <button id="refreshStocksButton" class="action-button">Actualiser les Données</button>
+            <button id="addProductBtn" style="display:none;">Ajouter un Produit</button>
+        </div>
+
+        <!-- Form for adding/editing products (initially hidden) -->
+        <div id="productFormContainer" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2 id="formTitle">Ajouter un Produit</h2>
+                <form id="productForm">
+                    <input type="hidden" id="productId" name="productId">
+                    <div>
+                        <label for="productName">Nom du produit:</label>
+                        <input type="text" id="productName" name="productName" required>
+                    </div>
+                    <div>
+                        <label for="productQuantity">Quantité:</label>
+                        <input type="number" id="productQuantity" name="productQuantity" required min="0">
+                    </div>
+                    <div>
+                        <label for="productThreshold">Seuil d'alerte:</label>
+                        <input type="number" id="productThreshold" name="productThreshold" required min="0">
+                    </div>
+                    <button type="submit" id="saveProductBtn">Enregistrer</button>
+                    <p id="formError" class="error-message"></p>
+                </form>
+            </div>
+        </div>
+
+        <table id="stockTable">
+            <thead>
+                <tr>
+                    <th>Nom du Produit</th>
+                    <th>Quantité</th>
+                    <th>Seuil d'Alerte</th>
+                    <th>Statut</th>
+                    <th id="actionsHeader" style="display:none;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="stockTableBody">
+                <!-- Stock items will be populated here by JavaScript -->
+            </tbody>
+        </table>
+        <p id="loadingMessage">Chargement des données...</p>
+         <p id="accessDeniedMessage" style="display:none;">Vous n'avez pas les droits nécessaires pour accéder à cette section ou effectuer cette action.</p>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/mockData.js"></script>
+    <script src="js/stocks.js"></script>
+    <script src="js/chatbot.js"></script>
+
+    <!-- Chatbot HTML -->
+    <div id="chatIcon" class="chat-icon-class">
+        <span>💬</span> 
+    </div>
+    <div id="chatWindow" class="chat-window-class">
+        <div class="chat-header">
+            <span>ServUp Assistant</span>
+            <button id="closeChat" class="close-chat-btn">&times;</button>
+        </div>
+        <div id="chatMessages" class="chat-messages-class">
+            <div class="chat-message bot"><p>Bonjour! Comment puis-je vous aider aujourd'hui?</p></div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Posez votre question...">
+            <button id="sendChatButton">Envoyer</button>
+        </div>
+    </div>
+</body>
+</html> 

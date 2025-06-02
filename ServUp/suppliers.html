@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ServUp - Gestion des Fournisseurs</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- We might need a specific CSS file later: <link rel="stylesheet" href="css/suppliers.css"> -->
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="img/logo.png" alt="ServUp Logo" id="navbarLogo">
+        </div>
+        <ul class="nav-links">
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="stocks.html" id="navStocks">Stocks</a></li>
+            <li><a href="employees.html" id="navEmployees">Employés</a></li>
+            <li><a href="orders.html" id="navOrders">Commandes</a></li>
+            <li><a href="suppliers.html" id="navSuppliers">Fournisseurs</a></li> <!-- New Link -->
+            <li><a href="reports.html">Rapports</a></li>
+            <li><a href="settings.html">Paramètres</a></li>
+        </ul>
+        <div class="nav-user">
+            <span id="usernameDisplay"></span>
+            <button id="logoutButton">Déconnexion</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Gestion des Fournisseurs</h1>
+
+        <div id="controlsSection">
+            <button id="addSupplierBtn" class="action-button">Ajouter un Fournisseur</button>
+            <!-- <button id="refreshSuppliersButton" class="action-button">Actualiser les Données</button> -->
+        </div>
+
+        <!-- Form for adding/editing suppliers (initially hidden) -->
+        <div id="supplierFormContainer" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2 id="formTitle">Ajouter un Fournisseur</h2>
+                <form id="supplierForm">
+                    <input type="hidden" id="supplierId" name="supplierId">
+                    <div>
+                        <label for="supplierName">Nom du fournisseur:</label>
+                        <input type="text" id="supplierName" name="supplierName" required>
+                    </div>
+                    <div>
+                        <label for="contactPerson">Personne à contacter:</label>
+                        <input type="text" id="contactPerson" name="contactPerson">
+                    </div>
+                    <div>
+                        <label for="supplierEmail">Email:</label>
+                        <input type="email" id="supplierEmail" name="supplierEmail">
+                    </div>
+                    <div>
+                        <label for="supplierPhone">Téléphone:</label>
+                        <input type="tel" id="supplierPhone" name="supplierPhone">
+                    </div>
+                    <div>
+                        <label for="supplierAddress">Adresse:</label>
+                        <textarea id="supplierAddress" name="supplierAddress" rows="3"></textarea>
+                    </div>
+                    <div>
+                        <label for="productsOffered">Produits/Services Proposés:</label>
+                        <textarea id="productsOffered" name="productsOffered" rows="3" placeholder="Ex: Fruits frais, Légumes de saison, Produits laitiers..."></textarea>
+                    </div>
+                    <div>
+                        <label for="supplierReferences">Références/Notes:</label>
+                        <textarea id="supplierReferences" name="supplierReferences" rows="3" placeholder="Ex: Contrat #123, Conditions spécifiques..."></textarea>
+                    </div>
+                    <button type="submit" id="saveSupplierBtn" class="action-button">Enregistrer</button>
+                    <p id="formError" class="error-message" style="display:none;"></p>
+                </form>
+            </div>
+        </div>
+
+        <table id="suppliersTable">
+            <thead>
+                <tr>
+                    <th>Nom du Fournisseur</th>
+                    <th>Personne à Contacter</th>
+                    <th>Email</th>
+                    <th>Téléphone</th>
+                    <th>Produits/Services</th>
+                    <th>Références</th>
+                    <th id="actionsHeader">Actions</th> <!-- For Edit/Delete buttons -->
+                </tr>
+            </thead>
+            <tbody id="suppliersTableBody">
+                <!-- Supplier items will be populated here by JavaScript -->
+            </tbody>
+        </table>
+        <p id="loadingMessage" style="display:none;">Chargement des données...</p>
+        <p id="noSuppliersMessage" style="display:none;">Aucun fournisseur trouvé.</p>
+        <p id="accessDeniedMessage" style="display:none;">Vous n'avez pas les droits nécessaires pour accéder à cette section.</p>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/mockData.js"></script> <!-- Will add mockSuppliers here later -->
+    <script src="js/suppliers.js"></script> <!-- We will create this file next -->
+    <script src="js/chatbot.js"></script>
+
+    <!-- Chatbot HTML (copied from stocks.html for consistency) -->
+    <div id="chatIcon" class="chat-icon-class"><span>💬</span></div>
+    <div id="chatWindow" class="chat-window-class">
+        <div class="chat-header">
+            <span>ServUp Assistant</span>
+            <button id="closeChat" class="close-chat-btn">&times;</button>
+        </div>
+        <div id="chatMessages" class="chat-messages-class">
+            <div class="chat-message bot"><p>Bonjour! Comment puis-je vous aider aujourd'hui?</p></div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Posez votre question...">
+            <button id="sendChatButton">Envoyer</button>
+        </div>
+    </div>
+</body>
+</html> 

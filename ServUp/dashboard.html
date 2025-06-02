@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ServUp - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="img/logo.png" alt="ServUp Logo" id="navbarLogo">
+        </div>
+        <ul class="nav-links">
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="stocks.html" id="navStocks">Stocks</a></li>
+            <li><a href="employees.html" id="navEmployees">Employés</a></li>
+            <li><a href="orders.html" id="navOrders">Commandes</a></li>
+            <li><a href="suppliers.html" id="navSuppliers">Fournisseurs</a></li>
+            <li><a href="reports.html">Rapports</a></li>
+            <li><a href="settings.html">Paramètres</a></li>
+        </ul>
+        <div class="nav-user">
+            <span id="usernameDisplay"></span>
+            <button id="logoutButton">Déconnexion</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Tableau de Bord</h1>
+        <p>Bienvenue, <span id="welcomeUsername"></span>!</p>
+        <p>Rôle: <span id="userRoleDisplay"></span></p>
+        <button id="refreshDashboardButton" class="action-button">Actualiser les Données</button>
+
+        <div id="dashboardContent">
+            <!-- Content will be dynamically loaded here based on role -->
+            <section id="generalStats" class="dashboard-section">
+                <h2>Statistiques Générales</h2>
+                <p>Nombre total d'employés: <span id="totalEmployees">N/A</span></p>
+                <p>Nombre de produits en stock: <span id="totalStockItems">N/A</span></p>
+                <p>Alertes de stock faible: <span id="lowStockAlerts">N/A</span></p>
+                <p>Commandes en cours: <span id="pendingOrders">N/A</span></p>
+            </section>
+
+            <section id="salesPerformanceStats" class="dashboard-section">
+                <h2>Ventes et Performances</h2>
+                <p>Chiffre d'affaires aujourd'hui: <span id="dailyRevenue">N/A</span> €</p>
+                <p>Commandes complétées aujourd'hui: <span id="dailyCompletedOrders">N/A</span></p>
+                <p>Panier moyen: <span id="averageOrderValue">N/A</span> €</p>
+            </section>
+
+            <section id="adminContent" class="dashboard-section" style="display:none;">
+                <h2>Accès Admin</h2>
+                <p>Vous avez un accès complet à toutes les fonctionnalités.</p>
+            </section>
+
+            <section id="stockManagerContent" class="dashboard-section" style="display:none;">
+                <h2>Gestion des Stocks</h2>
+                <p>Vous pouvez gérer les produits en stock.</p>
+                <a href="stocks.html">Accéder à la gestion des stocks</a>
+            </section>
+
+            <section id="hrManagerContent" class="dashboard-section" style="display:none;">
+                <h2>Gestion des Employés</h2>
+                <p>Vous pouvez gérer les employés.</p>
+                <a href="employees.html">Accéder à la gestion des employés</a>
+            </section>
+
+             <section id="employeeContent" class="dashboard-section" style="display:none;">
+                <h2>Informations</h2>
+                <p>Vous avez un accès en lecture seule aux données.</p>
+            </section>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/mockData.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/chatbot.js"></script>
+
+    <!-- Chatbot HTML -->
+    <div id="chatIcon" class="chat-icon-class">
+        <!-- You can use an SVG or an icon font here -->
+        <span>💬</span> 
+    </div>
+
+    <div id="chatWindow" class="chat-window-class">
+        <div class="chat-header">
+            <span>ServUp Assistant</span>
+            <button id="closeChat" class="close-chat-btn">&times;</button>
+        </div>
+        <div id="chatMessages" class="chat-messages-class">
+            <!-- Messages will appear here -->
+            <div class="chat-message bot"><p>Bonjour! Comment puis-je vous aider aujourd'hui?</p></div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Posez votre question...">
+            <button id="sendChatButton">Envoyer</button>
+        </div>
+    </div>
+</body>
+</html> 

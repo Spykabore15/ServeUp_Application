@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ServUp - Gestion des Commandes</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="img/logo.png" alt="ServUp Logo" id="navbarLogo">
+        </div>
+        <ul class="nav-links">
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="stocks.html" id="navStocks">Stocks</a></li>
+            <li><a href="employees.html" id="navEmployees">Employés</a></li>
+            <li><a href="orders.html" id="navOrders">Commandes</a></li>
+            <li><a href="suppliers.html" id="navSuppliers">Fournisseurs</a></li>
+            <li><a href="reports.html">Rapports</a></li>
+            <li><a href="settings.html">Paramètres</a></li>
+        </ul>
+        <div class="nav-user">
+            <span id="usernameDisplay"></span>
+            <button id="logoutButton">Déconnexion</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Gestion des Commandes</h1>
+
+        <div id="controlsSection">
+            <button id="refreshOrdersButton" class="action-button">Actualiser les Données</button>
+            <!-- Filter/Search can be added here later -->
+            <button id="addOrderBtn" style="display:none;">Ajouter une Commande</button>
+        </div>
+
+        <!-- Form for adding/editing orders (initially hidden) -->
+        <div id="orderFormContainer" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2 id="formTitleOrder">Ajouter une Commande</h2>
+                <form id="orderForm">
+                    <input type="hidden" id="orderId" name="orderId">
+                    <div>
+                        <label for="orderClient">Client:</label>
+                        <input type="text" id="orderClient" name="orderClient" required>
+                    </div>
+                    <div>
+                        <label for="orderDate">Date:</label>
+                        <input type="date" id="orderDate" name="orderDate" required>
+                    </div>
+                    <div>
+                        <label for="orderAmount">Montant (€):</label>
+                        <input type="number" id="orderAmount" name="orderAmount" required min="0" step="0.01">
+                    </div>
+                    <div>
+                        <label for="orderStatusModal">Statut:</label>
+                        <select id="orderStatusModal" name="orderStatusModal" required>
+                            <option value="en cours">En cours</option>
+                            <option value="livré">Livré</option>
+                            <option value="annulé">Annulé</option>
+                        </select>
+                    </div>
+                    <button type="submit" id="saveOrderBtn">Enregistrer</button>
+                    <p id="formErrorOrder" class="error-message"></p>
+                </form>
+            </div>
+        </div>
+
+        <table id="orderTable">
+            <thead>
+                <tr>
+                    <th>ID Commande</th>
+                    <th>Client</th>
+                    <th>Date</th>
+                    <th>Montant</th>
+                    <th>Statut</th>
+                    <th id="actionsHeaderOrder" style="display:none;">Actions</th> <!-- For Delete by Admin -->
+                </tr>
+            </thead>
+            <tbody id="orderTableBody">
+                <!-- Order items will be populated here by JavaScript -->
+            </tbody>
+        </table>
+        <p id="loadingMessageOrder">Chargement des données...</p>
+        <p id="accessDeniedMessageOrder" style="display:none;">Vous n'avez pas les droits nécessaires pour accéder à cette section.</p>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/mockData.js"></script>
+    <script src="js/orders.js"></script>
+    <script src="js/chatbot.js"></script>
+
+    <!-- Chatbot HTML -->
+    <div id="chatIcon" class="chat-icon-class">
+        <span>💬</span> 
+    </div>
+    <div id="chatWindow" class="chat-window-class">
+        <div class="chat-header">
+            <span>ServUp Assistant</span>
+            <button id="closeChat" class="close-chat-btn">&times;</button>
+        </div>
+        <div id="chatMessages" class="chat-messages-class">
+            <div class="chat-message bot"><p>Bonjour! Comment puis-je vous aider aujourd'hui?</p></div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Posez votre question...">
+            <button id="sendChatButton">Envoyer</button>
+        </div>
+    </div>
+</body>
+</html> 

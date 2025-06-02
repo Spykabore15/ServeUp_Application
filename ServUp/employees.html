@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ServUp - Gestion des Employés</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="img/logo.png" alt="ServUp Logo" id="navbarLogo">
+        </div>
+        <ul class="nav-links">
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="stocks.html" id="navStocks">Stocks</a></li>
+            <li><a href="employees.html" id="navEmployees">Employés</a></li>
+            <li><a href="orders.html" id="navOrders">Commandes</a></li>
+            <li><a href="suppliers.html" id="navSuppliers">Fournisseurs</a></li>
+            <li><a href="reports.html">Rapports</a></li>
+            <li><a href="settings.html">Paramètres</a></li>
+        </ul>
+        <div class="nav-user">
+            <span id="usernameDisplay"></span>
+            <button id="logoutButton">Déconnexion</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Gestion des Employés</h1>
+
+        <div id="controlsSection">
+            <input type="text" id="employeeSearch" placeholder="Rechercher un employé...">
+            <button id="addEmployeeBtn" style="display:none;">Ajouter un Employé</button>
+        </div>
+
+        <!-- Form for adding/editing employees (initially hidden) -->
+        <div id="employeeFormContainer" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2 id="formTitleEmployee">Ajouter un Employé</h2>
+                <form id="employeeForm">
+                    <input type="hidden" id="employeeId" name="employeeId">
+                    <div>
+                        <label for="employeeName">Nom complet:</label>
+                        <input type="text" id="employeeName" name="employeeName" required>
+                    </div>
+                    <div>
+                        <label for="employeePosition">Poste:</label>
+                        <input type="text" id="employeePosition" name="employeePosition" required>
+                    </div>
+                    <div>
+                        <label for="employeeStatus">Statut:</label>
+                        <select id="employeeStatus" name="employeeStatus" required>
+                            <option value="Actif">Actif</option>
+                            <option value="En congé">En congé</option>
+                            <option value="Parti">Parti</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="employeeRole">Rôle:</label>
+                        <select id="employeeRole" name="employeeRole" required>
+                            <!-- Options will be populated by JS based on logged-in user's role -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="employeePassword">Mot de passe:</label>
+                        <input type="password" id="employeePassword" name="employeePassword">
+                        <small>Laissez vide si inchangé (pour modification) ou pour générer un mot de passe par défaut (simulation).</small>
+                    </div>
+                    <div>
+                        <label for="confirmEmployeePassword">Confirmer le mot de passe:</label>
+                        <input type="password" id="confirmEmployeePassword" name="confirmEmployeePassword">
+                    </div>
+                    <button type="submit" id="saveEmployeeBtn">Enregistrer</button>
+                    <p id="formErrorEmployee" class="error-message"></p>
+                </form>
+            </div>
+        </div>
+
+        <table id="employeeTable">
+            <thead>
+                <tr>
+                    <th>Nom de l'Employé</th>
+                    <th>Poste</th>
+                    <th>Statut</th>
+                    <th>Rôle</th>
+                    <th id="actionsHeaderEmployee" style="display:none;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="employeeTableBody">
+                <!-- Employee items will be populated here by JavaScript -->
+            </tbody>
+        </table>
+        <p id="loadingMessageEmployee">Chargement des données...</p>
+        <p id="accessDeniedMessageEmployee" style="display:none;">Vous n'avez pas les droits nécessaires pour accéder à cette section ou effectuer cette action.</p>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/mockData.js"></script>
+    <script src="js/employees.js"></script>
+    <script src="js/chatbot.js"></script>
+
+    <!-- Chatbot HTML -->
+    <div id="chatIcon" class="chat-icon-class">
+        <span>💬</span> 
+    </div>
+    <div id="chatWindow" class="chat-window-class">
+        <div class="chat-header">
+            <span>ServUp Assistant</span>
+            <button id="closeChat" class="close-chat-btn">&times;</button>
+        </div>
+        <div id="chatMessages" class="chat-messages-class">
+            <div class="chat-message bot"><p>Bonjour! Comment puis-je vous aider aujourd'hui?</p></div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Posez votre question...">
+            <button id="sendChatButton">Envoyer</button>
+        </div>
+    </div>
+</body>
+</html> 

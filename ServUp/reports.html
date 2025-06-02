@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ServUp - Rapports</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            min-height: 350px; /* Ensure container has a minimum height */
+            position: relative;  /* Helps Chart.js responsiveness */
+            padding-bottom: 20px; /* Add some padding below the chart */
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            max-height: 330px; /* Prevent charts from becoming excessively tall on narrow screens, adjust as needed */
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="img/logo.png" alt="ServUp Logo" id="navbarLogo">
+        </div>
+        <ul class="nav-links">
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="stocks.html" id="navStocks">Stocks</a></li>
+            <li><a href="employees.html" id="navEmployees">Employés</a></li>
+            <li><a href="orders.html" id="navOrders">Commandes</a></li>
+            <li><a href="suppliers.html" id="navSuppliers">Fournisseurs</a></li>
+            <li><a href="reports.html">Rapports</a></li>
+            <li><a href="settings.html">Paramètres</a></li>
+        </ul>
+        <div class="nav-user">
+            <span id="usernameDisplay"></span>
+            <button id="logoutButton">Déconnexion</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Rapports et Analyses Visuelles</h1>
+
+        <div class="report-grid">
+            <div class="chart-container report-section">
+                <h2>Aperçu des Ventes</h2>
+                <div class="filter-container">
+                    <label for="salesDateRange">Filtrer par période :</label>
+                    <select id="salesDateRange" name="salesDateRange">
+                        <option value="all">Tout voir</option>
+                        <option value="7days">7 derniers jours</option>
+                        <option value="30days">30 derniers jours</option>
+                        <option value="currentMonth">Mois actuel</option>
+                        <option value="lastMonth">Mois dernier</option>
+                    </select>
+                </div>
+                <canvas id="salesOverTimeChart"></canvas>
+                <button id="exportSalesReport" class="action-button">Exporter Données Ventes (CSV)</button>
+            </div>
+
+            <div class="chart-container report-section">
+                <h2>Produits Populaires</h2>
+                <canvas id="topSellingProductsChart"></canvas>
+                <!-- Export for this data might be part of the main sales report or a separate one if needed -->
+            </div>
+
+            <div class="chart-container report-section">
+                <h2>Niveaux des Stocks</h2>
+                <canvas id="stockLevelsChart"></canvas>
+                <button id="exportStockReport" class="action-button">Exporter Données Stocks (CSV)</button>
+                <button id="contactSupplierFromReportBtn" class="action-button" style="margin-top: 10px;">Contacter un Fournisseur</button>
+            </div>
+            
+            <div class="chart-container report-section">
+                <h2>Analyse des Pertes</h2>
+                <canvas id="wastedProductsChart"></canvas>
+                <!-- Optional: Add an export button if this data should be exportable -->
+                <!-- <button id="exportWasteReport" class="action-button">Exporter Données Pertes (CSV)</button> -->
+            </div>
+
+            <div class="chart-container report-section">
+                <h2>Tendance des Ventes (Simulé)</h2>
+                <canvas id="salesTrendChart"></canvas>
+                <p><em>Note: Les prévisions sont simplifiées pour cette démo.</em></p>
+            </div>
+        </div>
+
+        <!-- Existing textual report data can be removed or kept for supplementary info -->
+        <!-- For now, I'll remove the old paragraph based report data as charts will replace them -->
+        <!--
+        <div class="report-section">
+            <h2>Rapport des Ventes</h2>
+            <p>Total des revenus: <span id="totalRevenueReport">N/A</span> €</p>
+            <p>Nombre total de commandes: <span id="totalOrdersReport">N/A</span></p>
+            <p>Produit le plus vendu: <span id="topSellingProduct">N/A</span></p>
+        </div>
+
+        <div class="report-section">
+            <h2>Rapport des Stocks</h2>
+            <p>Valeur totale du stock: <span id="totalStockValueReport">N/A</span> €</p>
+            <p>Produits en faible quantité: <span id="lowStockProductsReport">N/A</span></p>
+        </div>
+        
+        <div class="report-section">
+            <h2>Prévisions (Simulé)</h2>
+            <p>Tendance des ventes: <span id="salesTrend">N/A</span></p>
+        </div>
+        -->
+
+    </div>
+
+    <!-- Modal for Contacting Suppliers -->
+    <div id="contactSupplierModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-button" id="closeContactSupplierModal">&times;</span>
+            <h2>Contacter un Fournisseur</h2>
+            <div class="form-group">
+                <label for="supplierSearchInput">Rechercher (par nom ou produit):</label>
+                <input type="text" id="supplierSearchInput" placeholder="Ex: Ferme de la Vallée ou Tomates">
+            </div>
+            <div id="supplierListContainer">
+                <!-- Supplier list will be populated here by JavaScript -->
+            </div>
+            <p id="noSupplierResultsMsg" style="display:none;">Aucun fournisseur ne correspond à votre recherche.</p>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/mockData.js"></script>
+    <script src="js/reports.js"></script>
+    <script src="js/chatbot.js"></script>
+
+    <!-- Chatbot HTML -->
+    <div id="chatIcon" class="chat-icon-class">
+        <span>💬</span> 
+    </div>
+    <div id="chatWindow" class="chat-window-class">
+        <div class="chat-header">
+            <span>ServUp Assistant</span>
+            <button id="closeChat" class="close-chat-btn">&times;</button>
+        </div>
+        <div id="chatMessages" class="chat-messages-class">
+            <div class="chat-message bot"><p>Bonjour! Comment puis-je vous aider aujourd'hui?</p></div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Posez votre question...">
+            <button id="sendChatButton">Envoyer</button>
+        </div>
+    </div>
+</body>
+</html> 

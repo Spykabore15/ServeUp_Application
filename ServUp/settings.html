@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ServUp - Paramètres</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="img/logo.png" alt="ServUp Logo" id="navbarLogo">
+        </div>
+        <ul class="nav-links">
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="stocks.html" id="navStocks">Stocks</a></li>
+            <li><a href="employees.html" id="navEmployees">Employés</a></li>
+            <li><a href="orders.html" id="navOrders">Commandes</a></li>
+            <li><a href="suppliers.html" id="navSuppliers">Fournisseurs</a></li>
+            <li><a href="reports.html">Rapports</a></li>
+            <li><a href="settings.html">Paramètres</a></li>
+        </ul>
+        <div class="nav-user">
+            <span id="usernameDisplay"></span>
+            <button id="logoutButton">Déconnexion</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Paramètres</h1>
+
+        <div class="settings-section">
+            <h2>Préférences Générales</h2>
+            <form id="preferencesForm">
+                <div>
+                    <label for="restaurantName">Nom du Restaurant (simulé):</label>
+                    <input type="text" id="restaurantName" name="restaurantName">
+                </div>
+                <div>
+                    <label for="darkModeToggle">Mode Sombre:</label>
+                    <label class="switch">
+                        <input type="checkbox" id="darkModeToggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <button type="submit" id="savePreferences">Enregistrer les Préférences</button>
+                <p id="prefsMessage" class="success-message"></p>
+            </form>
+        </div>
+
+        <div class="settings-section">
+            <h2>Sécurité</h2>
+            <form id="changePasswordForm">
+                <div>
+                    <label for="currentPassword">Mot de passe actuel (simulé):</label>
+                    <input type="password" id="currentPassword" name="currentPassword">
+                </div>
+                <div>
+                    <label for="newPassword">Nouveau mot de passe (simulé):</label>
+                    <input type="password" id="newPassword" name="newPassword">
+                </div>
+                <div>
+                    <label for="confirmNewPassword">Confirmer le nouveau mot de passe (simulé):</label>
+                    <input type="password" id="confirmNewPassword" name="confirmNewPassword">
+                </div>
+                <button type="submit">Changer le Mot de Passe</button>
+                <p id="passwordChangeMessage" class="message"></p>
+            </form>
+        </div>
+
+        <section class="settings-section">
+            <h2>Accessibilité</h2>
+            <form id="accessibilityPreferencesForm">
+                <div class="form-group">
+                    <label for="fontSize">Taille de la Police :</label>
+                    <select id="fontSize" name="fontSize">
+                        <option value="small">Petite</option>
+                        <option value="normal" selected>Normale</option>
+                        <option value="large">Grande</option>
+                        <option value="xlarge">Très Grande</option> 
+                    </select>
+                </div>
+                <div class="form-group">
+                    <input type="checkbox" id="readableFont" name="readableFont">
+                    <label for="readableFont">Utiliser une police plus lisible</label>
+                </div>
+                <div class="form-group">
+                    <input type="checkbox" id="highlightLinks" name="highlightLinks">
+                    <label for="highlightLinks">Surligner les liens</label>
+                </div>
+                <div class="form-group">
+                    <input type="checkbox" id="highContrastMode" name="highContrastMode">
+                    <label for="highContrastMode">Mode Contraste Élevé</label>
+                </div>
+                <p class="settings-note">Les paramètres d'accessibilité sont appliqués immédiatement et sauvegardés pour vos prochaines visites.</p>
+            </form>
+        </section>
+
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/mockData.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/chatbot.js"></script>
+
+    <!-- Chatbot HTML -->
+    <div id="chatIcon" class="chat-icon-class">
+        <span>💬</span> 
+    </div>
+    <div id="chatWindow" class="chat-window-class">
+        <div class="chat-header">
+            <span>ServUp Assistant</span>
+            <button id="closeChat" class="close-chat-btn">&times;</button>
+        </div>
+        <div id="chatMessages" class="chat-messages-class">
+            <div class="chat-message bot"><p>Bonjour! Comment puis-je vous aider aujourd'hui?</p></div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Posez votre question...">
+            <button id="sendChatButton">Envoyer</button>
+        </div>
+    </div>
+</body>
+</html> 
