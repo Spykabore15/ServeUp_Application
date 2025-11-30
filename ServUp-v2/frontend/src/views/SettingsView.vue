@@ -211,7 +211,6 @@ import { ref, reactive } from 'vue'
 import { useSettingsStore } from '../store/settings'
 import { useAuthStore } from '../store/auth'
 import authService from '../services/authService'
-import { extractErrorMessage } from '../utils/apiResponseHandler'
 
 const settingsStore = useSettingsStore()
 const authStore = useAuthStore()
@@ -269,7 +268,7 @@ const handleChangePassword = async () => {
       passwordSuccess.value = ''
     }, 5000)
   } catch (error) {
-    passwordError.value = extractErrorMessage(error) || 'Failed to change password'
+    passwordError.value = error.response?.data?.message || error.message || 'Failed to change password'
   } finally {
     isChangingPassword.value = false
   }
