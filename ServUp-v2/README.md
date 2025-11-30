@@ -280,7 +280,7 @@ This project is for educational purposes only.
 For technical issues or questions:
 - Check the documentation in `/documentation`
 - Review the database schema: `/documentation/database-schema.md`
-- Contact: servup.support@example.com
+- Contact: [juveniskabore15@outlook.com](mailto:juveniskabore15@outlook.com)
 
 ---
 
