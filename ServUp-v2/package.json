@@ -1,0 +1,27 @@
+{
+  "name": "servup-v2",
+  "version": "2.0.0",
+  "description": "ServUp Restaurant Management System - Full Stack",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install && cd ..",
+    "db:migrate": "cd backend && npm run db:migrate",
+    "db:seed": "cd backend && npm run db:seed",
+    "db:reset": "cd backend && npm run db:reset"
+  },
+  "keywords": [
+    "restaurant",
+    "management",
+    "fullstack",
+    "vue",
+    "express"
+  ],
+  "author": "ServUp Team",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
+
