@@ -22,7 +22,7 @@
             <label class="toggle-switch">
               <input 
                 type="checkbox" 
-                v-model="settingsStore.darkMode"
+                :checked="settingsStore.darkMode"
                 @change="settingsStore.toggleDarkMode()"
               >
               <span class="slider"></span>
@@ -131,7 +131,7 @@
             <label class="toggle-switch">
               <input 
                 type="checkbox" 
-                v-model="settingsStore.readableFont"
+                :checked="settingsStore.readableFont"
                 @change="settingsStore.toggleReadableFont()"
               >
               <span class="slider"></span>
@@ -146,7 +146,7 @@
             <label class="toggle-switch">
               <input 
                 type="checkbox" 
-                v-model="settingsStore.highlightLinks"
+                :checked="settingsStore.highlightLinks"
                 @change="settingsStore.toggleHighlightLinks()"
               >
               <span class="slider"></span>
@@ -161,7 +161,7 @@
             <label class="toggle-switch">
               <input 
                 type="checkbox" 
-                v-model="settingsStore.highContrast"
+                :checked="settingsStore.highContrast"
                 @change="settingsStore.toggleHighContrast()"
               >
               <span class="slider"></span>
@@ -250,6 +250,11 @@ const handleChangePassword = async () => {
     return
   }
   
+  if (passwordForm.currentPassword === passwordForm.newPassword) {
+    passwordError.value = 'New password must be different from current password'
+    return
+  }
+  
   isChangingPassword.value = true
   
   try {
@@ -268,7 +273,13 @@ const handleChangePassword = async () => {
       passwordSuccess.value = ''
     }, 5000)
   } catch (error) {
-    passwordError.value = error.response?.data?.message || error.message || 'Failed to change password'
+    // Extract validation error message
+    const errorData = error.response?.data
+    if (errorData?.errors && errorData.errors.length > 0) {
+      passwordError.value = errorData.errors[0].message || errorData.message || 'Failed to change password'
+    } else {
+      passwordError.value = errorData?.message || error.message || 'Failed to change password'
+    }
   } finally {
     isChangingPassword.value = false
   }

@@ -1,42 +1,75 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useAuthStore } from './auth'
 
 export const useSettingsStore = defineStore('settings', () => {
-  // State
-  const darkMode = ref(localStorage.getItem('darkMode') === 'true' || false)
-  const fontSize = ref(localStorage.getItem('fontSize') || 'normal')
-  const readableFont = ref(localStorage.getItem('readableFont') === 'true' || false)
-  const highlightLinks = ref(localStorage.getItem('highlightLinks') === 'true' || false)
-  const highContrast = ref(localStorage.getItem('highContrast') === 'true' || false)
+  // Helper function to get user-specific key
+  const getStorageKey = (key) => {
+    const authStore = useAuthStore()
+    const userId = authStore.user?.id
+    return userId ? `settings_${userId}_${key}` : `settings_${key}`
+  }
+
+  // Helper function to load user-specific setting
+  const loadSetting = (key, defaultValue) => {
+    const storageKey = getStorageKey(key)
+    const value = localStorage.getItem(storageKey)
+    if (value === null) return defaultValue
+    if (typeof defaultValue === 'boolean') return value === 'true'
+    return value
+  }
+
+  // Helper function to save user-specific setting
+  const saveSetting = (key, value) => {
+    const storageKey = getStorageKey(key)
+    localStorage.setItem(storageKey, value.toString())
+  }
+
+  // State - initialized with default values, will be loaded when user logs in
+  const darkMode = ref(false)
+  const fontSize = ref('normal')
+  const readableFont = ref(false)
+  const highlightLinks = ref(false)
+  const highContrast = ref(false)
+
+  // Load user preferences
+  function loadUserPreferences() {
+    darkMode.value = loadSetting('darkMode', false)
+    fontSize.value = loadSetting('fontSize', 'normal')
+    readableFont.value = loadSetting('readableFont', false)
+    highlightLinks.value = loadSetting('highlightLinks', false)
+    highContrast.value = loadSetting('highContrast', false)
+    updateBodyClasses()
+  }
 
   // Actions
   function toggleDarkMode() {
     darkMode.value = !darkMode.value
-    localStorage.setItem('darkMode', darkMode.value.toString())
+    saveSetting('darkMode', darkMode.value)
     updateBodyClasses()
   }
 
   function setFontSize(size) {
     fontSize.value = size
-    localStorage.setItem('fontSize', size)
+    saveSetting('fontSize', size)
     updateBodyClasses()
   }
 
   function toggleReadableFont() {
     readableFont.value = !readableFont.value
-    localStorage.setItem('readableFont', readableFont.value.toString())
+    saveSetting('readableFont', readableFont.value)
     updateBodyClasses()
   }
 
   function toggleHighlightLinks() {
     highlightLinks.value = !highlightLinks.value
-    localStorage.setItem('highlightLinks', highlightLinks.value.toString())
+    saveSetting('highlightLinks', highlightLinks.value)
     updateBodyClasses()
   }
 
   function toggleHighContrast() {
     highContrast.value = !highContrast.value
-    localStorage.setItem('highContrast', highContrast.value.toString())
+    saveSetting('highContrast', highContrast.value)
     updateBodyClasses()
   }
 
@@ -58,9 +91,6 @@ export const useSettingsStore = defineStore('settings', () => {
     body.classList.toggle('high-contrast', highContrast.value)
   }
 
-  // Initialize body classes on load
-  updateBodyClasses()
-
   return {
     // State
     darkMode,
@@ -69,6 +99,7 @@ export const useSettingsStore = defineStore('settings', () => {
     highlightLinks,
     highContrast,
     // Actions
+    loadUserPreferences,
     toggleDarkMode,
     setFontSize,
     toggleReadableFont,

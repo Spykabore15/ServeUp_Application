@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import authService from '../services/authService'
+import { useSettingsStore } from './settings'
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -27,6 +28,11 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = response.user
       localStorage.setItem('token', response.token)
       console.log('✅ Auth Store: Login successful, user:', user.value)
+      
+      // Load user-specific settings after login
+      const settingsStore = useSettingsStore()
+      settingsStore.loadUserPreferences()
+      
       return true
     } catch (err) {
       console.error('❌ Auth Store: Login failed:', err)
@@ -55,6 +61,10 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const response = await authService.getCurrentUser()
       user.value = response.user
+      
+      // Load user-specific settings after fetching user
+      const settingsStore = useSettingsStore()
+      settingsStore.loadUserPreferences()
     } catch (err) {
       console.error('Failed to fetch user:', err)
       // If token is invalid, logout

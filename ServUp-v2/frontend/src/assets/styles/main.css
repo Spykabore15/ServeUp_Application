@@ -148,6 +148,18 @@ body.readable-font {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Highlight Links */
+body.highlight-links a {
+  background-color: #ffff00;
+  padding: 2px 4px;
+  text-decoration: underline;
+  font-weight: bold;
+}
+
+body.highlight-links a:hover {
+  background-color: #ffeb3b;
+}
+
 /* High Contrast Mode */
 body.high-contrast {
   background-color: #000000 !important;

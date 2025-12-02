@@ -3,7 +3,14 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar" :class="{ collapsed: sidebarCollapsed }">
       <div class="sidebar-header">
-        <h2 class="app-title">🍽️ ServUp</h2>
+        <div class="logo-container">
+          <img 
+            :src="logoImage" 
+            alt="ServUp Logo" 
+            class="app-logo"
+            :class="{ 'logo-collapsed': sidebarCollapsed }"
+          />
+        </div>
         <button @click="toggleSidebar" class="toggle-btn">
           {{ sidebarCollapsed ? '→' : '←' }}
         </button>
@@ -11,11 +18,10 @@
 
       <nav class="nav-menu">
         <router-link 
-          v-for="item in menuItems" 
+          v-for="item in visibleMenuItems" 
           :key="item.path"
           :to="item.path"
           class="nav-item"
-          :class="{ disabled: !canAccessRoute(item.roles) }"
         >
           <span class="nav-icon">{{ item.icon }}</span>
           <span v-if="!sidebarCollapsed" class="nav-label">{{ item.label }}</span>
@@ -42,13 +48,27 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
+import { useSettingsStore } from '../store/settings'
+import logoImage from '../assets/logo.png'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
 const sidebarCollapsed = ref(false)
+
+// Load user and preferences on mount
+onMounted(async () => {
+  // If user has a token but user data isn't loaded, fetch it
+  if (authStore.token && !authStore.user) {
+    await authStore.fetchCurrentUser()
+  } else if (authStore.user) {
+    // If user is already loaded, just load their preferences
+    settingsStore.loadUserPreferences()
+  }
+})
 
 const menuItems = [
   { path: '/dashboard', label: 'Dashboard', icon: '📊', roles: null },
@@ -69,6 +89,11 @@ const canAccessRoute = (roles) => {
   if (!roles) return true
   return roles.includes(authStore.user?.role)
 }
+
+// Filter menu items based on user role - hide inaccessible items
+const visibleMenuItems = computed(() => {
+  return menuItems.filter(item => canAccessRoute(item.roles))
+})
 
 const handleLogout = async () => {
   await authStore.logout()
@@ -101,24 +126,52 @@ const handleLogout = async () => {
 }
 
 .sidebar-header {
-  padding: 1.5rem 1rem;
+  padding: 2.5rem 1rem;
   border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  border-radius: 0 0 16px 16px;
+  margin-bottom: 0.5rem;
+  min-height: 160px;
 }
 
-.app-title {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: var(--primary-color);
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+  padding: 1rem;
+  width: 100%;
 }
 
-.collapsed .app-title {
-  font-size: 1.5rem;
+.app-logo {
+  height: 140px;
+  width: 140px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 6px 16px rgba(102, 126, 234, 0.3));
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.app-logo:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 8px 20px rgba(102, 126, 234, 0.5));
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+}
+
+.app-logo.logo-collapsed {
+  height: 55px;
+  width: 55px;
+  padding: 8px;
 }
 
 .toggle-btn {
