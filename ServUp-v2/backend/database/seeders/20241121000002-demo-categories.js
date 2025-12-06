@@ -5,12 +5,17 @@ module.exports = {
     const categories = [
       {
         name: 'Légumes',
-        description: 'Légumes frais et bio',
+        description: 'Légumes frais, bio et de saison',
         created_at: new Date()
       },
       {
         name: 'Viandes',
-        description: 'Viandes et volailles',
+        description: 'Viandes et volailles fraîches',
+        created_at: new Date()
+      },
+      {
+        name: 'Poissons',
+        description: 'Poissons et fruits de mer',
         created_at: new Date()
       },
       {
@@ -20,12 +25,32 @@ module.exports = {
       },
       {
         name: 'Produits Laitiers',
-        description: 'Fromages, lait, beurre',
+        description: 'Fromages, lait, beurre, crème',
         created_at: new Date()
       },
       {
         name: 'Pains et Pâtisseries',
-        description: 'Pains, viennoiseries et pâtisseries',
+        description: 'Pains artisanaux, viennoiseries et pâtisseries',
+        created_at: new Date()
+      },
+      {
+        name: 'Épices et Condiments',
+        description: 'Épices, herbes, sauces et condiments',
+        created_at: new Date()
+      },
+      {
+        name: 'Surgelés',
+        description: 'Produits surgelés et précuits',
+        created_at: new Date()
+      },
+      {
+        name: 'Céréales et Féculents',
+        description: 'Riz, pâtes, pommes de terre',
+        created_at: new Date()
+      },
+      {
+        name: 'Fruits',
+        description: 'Fruits frais et dessert',
         created_at: new Date()
       }
     ];
@@ -37,4 +62,3 @@ module.exports = {
     await queryInterface.bulkDelete('categories', null, {});
   }
 };
-
