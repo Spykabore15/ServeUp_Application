@@ -35,50 +35,50 @@ module.exports = {
 
       if (hasTerminated || (!hasInactive && enumCheck.length > 0)) {
         // Update enum type for status field
-        // First, drop the default
+        // Step 1: Drop the default constraint FIRST
         await queryInterface.sequelize.query(`
           ALTER TABLE employees 
           ALTER COLUMN status DROP DEFAULT;
         `);
 
-        // Change the column to text temporarily
+        // Step 2: Change the column to text temporarily (this removes the enum dependency)
         await queryInterface.sequelize.query(`
           ALTER TABLE employees 
-          ALTER COLUMN status TYPE VARCHAR(20);
+          ALTER COLUMN status TYPE VARCHAR(20) USING status::text;
         `);
 
-        // Drop the old enum type
-        await queryInterface.sequelize.query(`
-          DROP TYPE IF EXISTS "enum_employees_status";
-        `);
-
-        // Create new enum type
-        await queryInterface.sequelize.query(`
-          CREATE TYPE "enum_employees_status" AS ENUM ('active', 'inactive', 'on_leave');
-        `);
-
-        // Update any 'terminated' values to 'inactive'
+        // Step 3: Update any 'terminated' values to 'inactive' while it's text
         await queryInterface.sequelize.query(`
           UPDATE employees SET status = 'inactive' WHERE status = 'terminated';
         `);
 
-        // Update any NULL or empty string values to 'active' (default)
+        // Step 4: Update any NULL or empty string values to 'active' (default)
         await queryInterface.sequelize.query(`
           UPDATE employees SET status = 'active' WHERE status IS NULL OR status = '';
         `);
 
-        // Convert column back to enum with new type
+        // Step 5: NOW we can safely drop the old enum type (no dependencies left)
+        await queryInterface.sequelize.query(`
+          DROP TYPE IF EXISTS "enum_employees_status" CASCADE;
+        `);
+
+        // Step 6: Create new enum type
+        await queryInterface.sequelize.query(`
+          CREATE TYPE "enum_employees_status" AS ENUM ('active', 'inactive', 'on_leave');
+        `);
+
+        // Step 7: Convert column back to enum with new type
         // Handle any remaining invalid values by defaulting to 'active'
         await queryInterface.sequelize.query(`
           ALTER TABLE employees 
           ALTER COLUMN status TYPE "enum_employees_status" 
           USING CASE 
-            WHEN status::text IN ('active', 'inactive', 'on_leave') THEN status::text::"enum_employees_status"
+            WHEN status IN ('active', 'inactive', 'on_leave') THEN status::"enum_employees_status"
             ELSE 'active'::"enum_employees_status"
           END;
         `);
 
-        // Set default value
+        // Step 8: Set default value (this creates a new dependency)
         await queryInterface.sequelize.query(`
           ALTER TABLE employees 
           ALTER COLUMN status SET DEFAULT 'active';
