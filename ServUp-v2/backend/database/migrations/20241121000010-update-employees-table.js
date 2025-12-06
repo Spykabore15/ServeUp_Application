@@ -62,10 +62,20 @@ module.exports = {
           UPDATE employees SET status = 'inactive' WHERE status = 'terminated';
         `);
 
+        // Update any NULL or empty string values to 'active' (default)
+        await queryInterface.sequelize.query(`
+          UPDATE employees SET status = 'active' WHERE status IS NULL OR status = '';
+        `);
+
         // Convert column back to enum with new type
+        // Handle any remaining invalid values by defaulting to 'active'
         await queryInterface.sequelize.query(`
           ALTER TABLE employees 
-          ALTER COLUMN status TYPE "enum_employees_status" USING status::"enum_employees_status";
+          ALTER COLUMN status TYPE "enum_employees_status" 
+          USING CASE 
+            WHEN status::text IN ('active', 'inactive', 'on_leave') THEN status::text::"enum_employees_status"
+            ELSE 'active'::"enum_employees_status"
+          END;
         `);
 
         // Set default value
