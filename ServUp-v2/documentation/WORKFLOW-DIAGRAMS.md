@@ -465,7 +465,7 @@ flowchart TD
     
     style A fill:#e1f5ff
     style K fill:#fff4e1
-    structure AN fill:#cfe2ff
+    style AN fill:#cfe2ff
     style AU fill:#90EE90
     style BD fill:#90EE90
     style BE fill:#90EE90
