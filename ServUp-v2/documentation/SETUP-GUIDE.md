@@ -37,6 +37,41 @@ This guide provides **detailed step-by-step instructions** for setting up ServUp
 Before starting, ensure you have installed:
 
 ### Required Software
+
+#### ⚠️ Docker Desktop (MANDATORY)
+
+**Docker Desktop is absolutely required** for this project. The application uses Docker to run the PostgreSQL database.
+
+**Why Docker is Required:**
+- ServUp v2.0 needs a PostgreSQL database to store all data (users, products, orders, etc.)
+- Docker runs PostgreSQL in an isolated container, so you don't need to install it manually
+- This ensures the database works the same way on all operating systems
+- The `docker-compose.yml` file automatically sets up the database with the correct configuration
+
+**What Happens Without Docker:**
+- ❌ The application **will not work** - the backend cannot connect to the database
+- ❌ You'll get connection errors when trying to start the server
+- ❌ Database migrations and seeding will fail
+
+**Installation:**
+- **Download:** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- **Choose your OS:** Windows, Mac (Intel/Apple Silicon), or Linux
+- **Install:** Run the installer and follow the setup wizard
+- **Start:** Launch Docker Desktop and wait for it to fully start (30-60 seconds)
+
+**Verify Docker is Working:**
+```bash
+docker --version          # Should show "Docker version 24.x.x" or similar
+docker-compose --version  # Should show "docker-compose version 2.x.x" or similar
+```
+
+**Troubleshooting Docker:**
+- Make sure Docker Desktop is **running** (look for the icon in system tray/menu bar)
+- If commands don't work, restart Docker Desktop
+- See [Issue 5: Docker Issues](#issue-5-docker-issues) in the troubleshooting section
+
+#### Node.js and npm
+
 - [ ] **Node.js** version 18+ ([Download](https://nodejs.org/))
   ```bash
   node --version  # Should show v18.x.x or higher
@@ -45,12 +80,6 @@ Before starting, ensure you have installed:
 - [ ] **npm** version 9+ (comes with Node.js)
   ```bash
   npm --version   # Should show 9.x.x or higher
-  ```
-
-- [ ] **Docker Desktop** ([Download](https://www.docker.com/products/docker-desktop/))
-  ```bash
-  docker --version          # Should work
-  docker-compose --version  # Should work
   ```
 
 ### Optional Tools (Recommended)
@@ -91,18 +120,34 @@ docker-compose --version
 
 ## 🐳 Step 2: Start the Database
 
-Navigate to the project root and start PostgreSQL:
+**⚠️ CRITICAL:** This step **requires Docker Desktop to be running**. If you haven't installed Docker Desktop yet, go back to [Step 1](#-step-1-verify-prerequisites) and install it first.
+
+Navigate to the project root and start PostgreSQL using Docker:
 
 ```bash
 cd ServUp-v2
 docker-compose up -d
 ```
 
-**What this does:**
-- Downloads PostgreSQL 16 (first time only)
-- Creates `servup_db` database
-- Starts PostgreSQL on port 5432
-- Starts pgAdmin on port 5050 (optional database UI)
+**What this command does:**
+- **Downloads PostgreSQL 16** (first time only, ~100MB) - the database software
+- **Creates `servup_db` database** automatically - where all application data will be stored
+- **Starts PostgreSQL server** on port `5432` - the database accepts connections on this port
+- **Starts pgAdmin** on port `5050` - a web-based database management tool (optional but useful)
+
+**Why Docker is used here:**
+Instead of installing PostgreSQL directly on your computer, Docker runs it in a container. This means:
+- No complex PostgreSQL installation and configuration
+- Database is isolated and won't interfere with other applications
+- Easy to start/stop/reset the database
+- Works identically on Windows, Mac, and Linux
+
+**If Docker Desktop is not running, you'll see:**
+```
+Error response from daemon: Cannot connect to the Docker daemon...
+```
+
+**Solution:** Make sure Docker Desktop is running (check system tray/menu bar for Docker icon).
 
 **Verify it's running:**
 ```bash

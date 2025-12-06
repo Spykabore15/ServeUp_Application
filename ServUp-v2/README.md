@@ -101,6 +101,35 @@ Before starting, ensure you have the following software installed on your system
 | **Docker Desktop** | Latest | [Download](https://www.docker.com/products/docker-desktop/) | `docker --version` |
 | **Git** (optional) | Latest | [Download](https://git-scm.com/) | `git --version` |
 
+### Why Docker Desktop is Required
+
+**Docker Desktop is mandatory** for this project. Here's why:
+
+**What Docker Does:**
+- **Runs PostgreSQL Database:** ServUp v2.0 requires a PostgreSQL database to store all application data. Docker runs this database in an isolated container, eliminating the need to install PostgreSQL directly on your system.
+
+**Benefits of Using Docker:**
+- ✅ **No Manual Database Installation:** You don't need to install and configure PostgreSQL manually
+- ✅ **Consistent Environment:** Database runs the same way on Windows, Mac, and Linux
+- ✅ **Easy Setup:** Database starts with a single command (`docker-compose up -d`)
+- ✅ **Isolated:** Database runs in a container, separate from your system
+- ✅ **Includes pgAdmin:** Database management UI is automatically included
+
+**What Happens Without Docker:**
+- ❌ **Application Won't Work:** The backend cannot connect to the database
+- ❌ **Database Errors:** You'll see connection errors when starting the server
+- ❌ **Missing Dependency:** The application requires a PostgreSQL database to function
+
+**Alternative (Not Recommended):**
+If you cannot use Docker, you would need to:
+1. Install PostgreSQL 16+ manually on your system
+2. Create the database `servup_db` manually
+3. Configure database credentials
+4. Update the `.env` file with your database connection details
+5. This process is more complex and error-prone
+
+**We strongly recommend using Docker Desktop** for the easiest setup experience.
+
 ### Verify Installation
 
 Run these commands in your terminal to verify installations:
@@ -108,9 +137,15 @@ Run these commands in your terminal to verify installations:
 ```bash
 node --version    # Should show v18.x.x or higher
 npm --version     # Should show 9.x.x or higher
-docker --version  # Should show Docker version
-docker-compose --version  # Should show docker-compose version
+docker --version  # Should show Docker version (e.g., "Docker version 24.x.x")
+docker-compose --version  # Should show docker-compose version (e.g., "docker-compose version 2.x.x")
 ```
+
+**If Docker commands don't work:**
+- Make sure Docker Desktop is installed and running
+- On Windows/Mac: Look for the Docker Desktop icon in your system tray/menu bar
+- Restart Docker Desktop if the commands fail
+- See [Troubleshooting](#-troubleshooting) section for more help
 
 ### Optional Tools (Recommended)
 
@@ -135,23 +170,34 @@ cd ServUp-v2
 cd ServUp-v2
 ```
 
-### Step 2: Start Database with Docker
+### Step 2: Start Database with Docker ⚠️ **REQUIRED**
+
+**Important:** This step **requires Docker Desktop to be running**. Make sure Docker Desktop is installed and started before proceeding.
 
 ```bash
 docker-compose up -d
 ```
 
 **What this does:**
-- Downloads PostgreSQL 16 (first time only, ~100MB)
-- Creates `servup_db` database automatically
-- Starts PostgreSQL on port `5432`
-- Starts pgAdmin on port `5050` (optional database UI)
+- **Downloads PostgreSQL 16** (first time only, ~100MB download)
+- **Creates `servup_db` database** automatically
+- **Starts PostgreSQL** database server on port `5432`
+- **Starts pgAdmin** (database management UI) on port `5050`
+
+**Why Docker is needed here:**
+The `docker-compose.yml` file defines how to run the PostgreSQL database in a container. Without Docker Desktop running, this command will fail and you won't be able to proceed with the setup.
 
 **Verify database is running:**
 ```bash
 docker ps
 # You should see: servup_postgres and servup_pgadmin containers
+# Both should show STATUS: Up
 ```
+
+**If you see an error:**
+- Make sure Docker Desktop is running (check system tray/menu bar)
+- Wait 30-60 seconds after starting Docker Desktop before running the command
+- See [Troubleshooting](#-troubleshooting) section for Docker issues
 
 **Expected output:**
 ```
