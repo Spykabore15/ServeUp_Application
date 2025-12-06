@@ -1,31 +1,63 @@
 # ServUp v2.0 - Restaurant Chain Management System
 
+## 📋 Table of Contents
+
+1. [Project Overview](#-project-overview)
+2. [Technology Stack](#-technology-stack)
+3. [Prerequisites](#-prerequisites)
+4. [Quick Start Guide](#-quick-start-guide-recommended)
+5. [Detailed Setup Instructions](#-detailed-setup-instructions)
+6. [User Roles & Test Accounts](#-user-roles--test-accounts)
+7. [Available Scripts](#-available-scripts)
+8. [Database Management](#-database-management)
+9. [Testing the Application](#-testing-the-application)
+10. [Troubleshooting](#-troubleshooting)
+11. [Project Structure](#-project-structure)
+12. [Additional Documentation](#-additional-documentation)
+
+---
+
 ## 🎯 Project Overview
 
-ServUp v2.0 is a modern, full-stack web application for managing restaurant chain operations. This version is a complete rebuild with professional technologies and real database integration.
+ServUp v2.0 is a modern, full-stack web application for managing restaurant chain operations. This version is a complete rebuild with professional technologies and real database integration, transforming the static prototype (v1) into a production-ready, database-driven platform.
+
+**Key Features:**
+- 🔐 Secure JWT-based authentication with role-based access control
+- 📊 Real-time inventory management with low-stock alerts
+- 👥 Comprehensive employee and workforce management
+- 📦 Complete order processing and sales tracking
+- 📈 Analytics dashboard with KPIs and reporting
+- 🗄️ PostgreSQL database with Sequelize ORM
+- 🎨 Modern Vue.js 3 frontend with responsive design
+- 🐳 Docker-based database setup for easy deployment
 
 ## 📚 Technology Stack
 
 ### Backend
-- **Node.js** + **Express.js** - Server and API
-- **PostgreSQL** - Relational database
+- **Node.js 18+** - JavaScript runtime
+- **Express.js** - Web framework for RESTful API
+- **PostgreSQL 16** - Relational database
 - **Sequelize** - ORM (Object-Relational Mapping)
-- **JWT** - Secure authentication
-- **bcrypt** - Password hashing
+- **JWT** - Secure token-based authentication
+- **bcrypt** - Password hashing and encryption
+- **Express-validator** - Input validation middleware
 
 ### Frontend
 - **Vue.js 3** - Progressive JavaScript framework
-- **Pinia** - State management
-- **Vue Router** - Navigation
-- **Axios** - HTTP client
-- **Chart.js** - Data visualization
+- **Pinia** - State management library
+- **Vue Router** - Client-side routing
+- **Axios** - HTTP client for API communication
+- **Chart.js** - Data visualization and charts
+- **Vite** - Build tool and development server
 
-### DevOps
-- **Docker** - Containerization
-- **Docker Compose** - Multi-container orchestration
+### DevOps & Tools
+- **Docker & Docker Compose** - Containerization for database
+- **pgAdmin** - Database management UI
+- **Git** - Version control
+- **npm** - Package management
 
-### AI Assistant
-- **OpenAI API** / **LangChain** - Intelligent chatbot
+### Future Enhancements
+- **OpenAI API** / **LangChain** - AI assistant integration (planned)
 
 ## 🏗️ Project Structure
 
@@ -56,37 +88,239 @@ ServUp-v2/
 └── docker-compose.yml # Docker configuration
 ```
 
-## 🚀 Getting Started
+## ✅ Prerequisites
 
-### Prerequisites
+Before starting, ensure you have the following software installed on your system:
 
-- **Node.js** (v18 or higher)
-- **npm** (v9 or higher)
-- **Docker** and **Docker Compose** (for database)
-- **PostgreSQL** (v16 or higher) - if not using Docker
+### Required Software
 
-### Quick Start (Recommended) ⚡
+| Software | Minimum Version | Download Link | Verification Command |
+|----------|----------------|---------------|---------------------|
+| **Node.js** | v18.0.0 | [Download](https://nodejs.org/) | `node --version` |
+| **npm** | v9.0.0 | (comes with Node.js) | `npm --version` |
+| **Docker Desktop** | Latest | [Download](https://www.docker.com/products/docker-desktop/) | `docker --version` |
+| **Git** (optional) | Latest | [Download](https://git-scm.com/) | `git --version` |
+
+### Verify Installation
+
+Run these commands in your terminal to verify installations:
 
 ```bash
-# 1. Start database
+node --version    # Should show v18.x.x or higher
+npm --version     # Should show 9.x.x or higher
+docker --version  # Should show Docker version
+docker-compose --version  # Should show docker-compose version
+```
+
+### Optional Tools (Recommended)
+
+- **Visual Studio Code** - Recommended code editor
+- **Postman** or **Thunder Client** - For API testing
+- **pgAdmin** - Database GUI (included in Docker setup)
+
+---
+
+## 🚀 Quick Start Guide (Recommended)
+
+This is the fastest way to get ServUp v2.0 running. Follow these steps in order:
+
+### Step 1: Clone and Navigate to Project
+
+```bash
+# If cloning from repository
+git clone <repository-url>
+cd ServUp-v2
+
+# Or navigate to existing project directory
+cd ServUp-v2
+```
+
+### Step 2: Start Database with Docker
+
+```bash
 docker-compose up -d
+```
 
-# 2. Install all dependencies (first time only)
+**What this does:**
+- Downloads PostgreSQL 16 (first time only, ~100MB)
+- Creates `servup_db` database automatically
+- Starts PostgreSQL on port `5432`
+- Starts pgAdmin on port `5050` (optional database UI)
+
+**Verify database is running:**
+```bash
+docker ps
+# You should see: servup_postgres and servup_pgadmin containers
+```
+
+**Expected output:**
+```
+Creating network "servup-v2_servup_network" ... done
+Creating servup_postgres ... done
+Creating servup_pgadmin ... done
+```
+
+### Step 3: Install All Dependencies (First Time Only)
+
+```bash
 npm run install:all
+```
 
-# 3. Run database migrations (first time only)
+**What this does:**
+- Installs root-level dependencies
+- Installs backend dependencies (Node.js packages)
+- Installs frontend dependencies (Vue.js packages)
+
+**Time required:** 2-5 minutes (depending on internet speed)
+
+**Expected output:**
+```
+> servup-v2@2.0.0 install:all
+> npm install && cd backend && npm install && cd ../frontend && npm install && cd ..
+...
+added 150 packages in 30s
+added 200 packages in 45s
+added 300 packages in 60s
+```
+
+### Step 4: Configure Backend Environment
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Copy environment template (Windows PowerShell)
+copy env.example .env
+
+# OR (Mac/Linux/Git Bash)
+cp env.example .env
+```
+
+**Edit `.env` file** and ensure these values are set:
+
+```env
+# Server Configuration
+PORT=5000
+NODE_ENV=development
+
+# Database Configuration (should match docker-compose.yml)
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=servup_db
+DB_USER=postgres
+DB_PASSWORD=servup_password_2024
+
+# JWT Configuration
+JWT_SECRET=your_super_secret_jwt_key_CHANGE_THIS_IN_PRODUCTION_123!@#
+JWT_EXPIRES_IN=24h
+
+# CORS Configuration
+FRONTEND_URL=http://localhost:5173
+```
+
+**Important:** The `JWT_SECRET` should be changed in production. For development, the example value is acceptable.
+
+**Return to root directory:**
+```bash
+cd ..
+```
+
+### Step 5: Run Database Migrations (First Time Only)
+
+```bash
 npm run db:migrate
+```
 
-# 4. Seed database with test data (first time only)
+**What this does:**
+- Creates all database tables (users, employees, products, orders, etc.)
+- Sets up relationships and constraints
+- Creates indexes for performance
+
+**Expected output:**
+```
+Loaded configuration file "config/database.js".
+Using environment "development".
+== 20241121000001-create-users: migrating =======
+== 20241121000001-create-users: migrated (0.123s)
+== 20241121000002-create-employees: migrating =======
+...
+Migration completed successfully!
+```
+
+**Verify tables were created:**
+```bash
+# Using Docker command line
+docker exec -it servup_postgres psql -U postgres -d servup_db -c "\dt"
+
+# You should see 9 tables listed
+```
+
+### Step 6: Seed Database with Test Data (First Time Only)
+
+```bash
 npm run db:seed
+```
 
-# 5. Start both frontend and backend together!
+**What this does:**
+- Creates 4 test user accounts (admin, responsable_stocks, responsable_employes, employe)
+- Adds sample products, employees, suppliers, categories
+- Creates sample orders and order items
+- Adds sample waste records
+
+**Expected output:**
+```
+== Seeding demo users ==
+User 'admin' created successfully
+User 'responsable_stocks' created successfully
+...
+Database seeded successfully!
+```
+
+### Step 7: Start Development Servers
+
+```bash
 npm run dev
 ```
 
-That's it! 🎉
-- Backend: `http://localhost:5000`
-- Frontend: `http://localhost:5173`
+**What this does:**
+- Starts backend server on `http://localhost:5000`
+- Starts frontend server on `http://localhost:5173`
+- Both servers run in the same terminal window
+
+**Expected output:**
+```
+[0] > servup-v2@2.0.0 dev:backend
+[0] > cd backend && npm run dev
+[1] > servup-v2@2.0.0 dev:frontend
+[1] > cd frontend && npm run dev
+[0] ========================================
+[0] 🚀 ServUp Backend Server
+[0] 📍 Running on: http://localhost:5000
+[1]   VITE v6.0.7  ready in 342 ms
+[1]   ➜  Local:   http://localhost:5173/
+```
+
+### Step 8: Access the Application
+
+1. **Open your browser** and navigate to: `http://localhost:5173`
+2. **You should see** the ServUp login page
+3. **Use test credentials** (see [User Roles & Test Accounts](#-user-roles--test-accounts) section below)
+
+🎉 **Success!** Your application is now running.
+
+---
+
+## 📖 Detailed Setup Instructions
+
+For step-by-step instructions with troubleshooting tips, screenshots, and detailed explanations, please refer to the [Complete Setup Guide](./documentation/SETUP-GUIDE.md).
+
+The setup guide includes:
+- Detailed prerequisites verification
+- Step-by-step installation with explanations
+- Configuration instructions for all components
+- Database management using pgAdmin (GUI)
+- Troubleshooting common issues
+- Development workflow best practices
 
 ### Manual Setup (Alternative)
 
@@ -241,10 +475,81 @@ SELECT * FROM users;
 
 *(More endpoints will be documented as they are implemented)*
 
-## 🧪 Testing
+## 🧪 Testing the Application
+
+### Quick Health Check
+
+**1. Test Backend API:**
+Open your browser and navigate to:
+```
+http://localhost:5000/api/health
+```
+
+**Expected response:**
+```json
+{
+  "status": "success",
+  "message": "ServUp API is running",
+  "timestamp": "2024-11-21T..."
+}
+```
+
+**2. Test Frontend:**
+- Navigate to `http://localhost:5173`
+- You should see the login page
+- Try logging in with test accounts (see below)
+
+### Manual Testing Checklist
+
+After setup, verify these features work:
+
+- [ ] **Login** - Can log in with test accounts
+- [ ] **Dashboard** - Dashboard loads and shows statistics
+- [ ] **Navigation** - Can navigate between different pages
+- [ ] **Role-Based Access** - Different roles see different menu options
+- [ ] **Products** - Can view, create, edit, delete products (if role allows)
+- [ ] **Employees** - Can view, create, edit, delete employees (if role allows)
+- [ ] **Orders** - Can view and create orders
+- [ ] **Logout** - Can successfully log out
+
+### API Testing
+
+Use Postman or Thunder Client to test API endpoints:
+
+**Example: Login API Test**
+```http
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+```
+
+**Expected response:**
+```json
+{
+  "status": "success",
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "username": "admin",
+    "email": "admin@servup.com",
+    "role": "admin"
+  }
+}
+```
+
+For detailed testing instructions, see [Testing Guide](./documentation/TESTING.md).
+
+### Automated Tests (Future)
+
+Automated testing framework will be implemented in future versions:
 
 ```bash
-# Run all tests
+# Run all tests (when implemented)
 npm test
 
 # Run tests with coverage
@@ -254,6 +559,33 @@ npm run test:coverage
 npm test -- auth.test.js
 ```
 
+## ⚠️ Current Limitations
+
+**Important Notice for Reviewers and Stakeholders:**
+
+The current MVP implementation has **known limitations** in the User and Employee Management system. These limitations are documented in detail in the [Limitations and Future Plans](./documentation/LIMITATIONS-AND-FUTURE-PLANS.md) document.
+
+### Key Limitations:
+
+1. **No Access Request Workflow:** The system lacks an access request → approval → account creation workflow. Users can be created directly without an approval process.
+
+2. **Separate User/Employee Creation:** Users and employees are created independently, which can lead to data inconsistencies and operational inefficiencies.
+
+3. **Optional User-Employee Relationship:** The database allows users to exist without employee records, which doesn't align with the intended business logic.
+
+4. **Manual Onboarding Process:** There is no automated workflow for granting system access to new employees.
+
+5. **No Email Notifications:** The system does not send automated emails for access approvals, credential delivery, or request status updates.
+
+### Impact on MVP:
+
+- ✅ **Core functionality works:** Authentication, CRUD operations, role-based access control all function correctly
+- ⚠️ **Workflow gaps:** Manual processes required for user/employee onboarding
+- ⚠️ **Data integrity:** Optional relationships allow inconsistent data states
+- ⚠️ **User experience:** No self-service access request mechanism
+
+**For detailed information, please review:** [Limitations and Future Plans](./documentation/LIMITATIONS-AND-FUTURE-PLANS.md)
+
 ## 📝 Development Progress
 
 **Core Infrastructure:**
@@ -262,28 +594,22 @@ npm test -- auth.test.js
 - [x] Frontend initialization (Vue 3 + Vite)
 - [x] Database schema design
 - [x] Docker setup
-- [x] **Database models and migrations** (10 models, 12 migrations)
+- [x] Database models and migrations (10 models, 10 migrations)
+- [x] Authentication system (JWT-based)
+- [x] CRUD operations (Products, Employees, Orders, Suppliers, Users, Categories)
+- [x] Dashboard with statistics
+- [x] Reports & Analytics
+- [x] Role-based access control
 
-**Authentication & Security:**
-- [x] **Authentication system** (JWT - Login, Register, Logout, Password change)
-- [x] Role-based access control (RBAC)
-- [x] Signup request workflow with admin approval
+**Known Limitations:**
+- [ ] Access request workflow (planned for future iteration)
+- [ ] Automated user-employee onboarding (planned for future iteration)
+- [ ] Email notification system (planned for future iteration)
 
-**CRUD Operations:**
-- [x] **CRUD operations** - Full Create, Read, Update, Delete for:
-  - Products, Employees, Suppliers, Orders, Users, Categories
-  - All with pagination, search, and filters
-
-**Features:**
-- [x] Dashboard with real-time statistics
-- [x] Reports & Analytics with charts
-- [x] Modern UI design system
-- [x] Role-specific dashboards
-- [x] CSV export functionality
-
-**Remaining:**
+**Future Enhancements:**
 - [ ] AI assistant integration
-- [ ] Final documentation
+- [ ] Real-time notifications
+- [ ] Advanced reporting features
 
 ## 🤝 Contributing
 
@@ -293,12 +619,22 @@ This is an academic project. For any questions or suggestions, please contact th
 
 This project is for educational purposes only.
 
+## 📚 Additional Documentation
+
+- [📖 Complete API Documentation](./documentation/API.md)
+- [⚠️ **Limitations and Future Plans**](./documentation/LIMITATIONS-AND-FUTURE-PLANS.md) - **Important: Current system limitations**
+- [🔧 Setup Guide](./documentation/SETUP-GUIDE.md)
+- [📊 Database Schema](./documentation/database-schema.md)
+- [🧪 Testing Guide](./documentation/TESTING.md)
+- [⚡ Quick Start Guide](./QUICK-START.md)
+
 ## 📞 Support
 
 For technical issues or questions:
 - Check the documentation in `/documentation`
 - Review the database schema: `/documentation/database-schema.md`
-- Contact: [juveniskabore15@outlook.com](mailto:juveniskabore15@outlook.com)
+- Review limitations: `/documentation/LIMITATIONS-AND-FUTURE-PLANS.md`
+- Contact: servup.support@example.com
 
 ---
 
