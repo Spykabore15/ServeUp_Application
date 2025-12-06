@@ -62,26 +62,48 @@ module.exports = {
 
   down: async (queryInterface, Sequelize) => {
     // Remove added columns
-    await queryInterface.removeColumn('employees', 'address');
-    await queryInterface.removeColumn('employees', 'emergency_contact');
+    const tableInfo = await queryInterface.describeTable('employees');
+    
+    if (tableInfo.address) {
+      await queryInterface.removeColumn('employees', 'address');
+    }
+    
+    if (tableInfo.emergency_contact) {
+      await queryInterface.removeColumn('employees', 'emergency_contact');
+    }
 
-    // Revert enum type
+    // Revert enum type - must drop default first
+    await queryInterface.sequelize.query(`
+      ALTER TABLE employees 
+      ALTER COLUMN status DROP DEFAULT;
+    `);
+
+    // Change to text temporarily
     await queryInterface.sequelize.query(`
       ALTER TABLE employees 
       ALTER COLUMN status TYPE VARCHAR(20);
     `);
 
+    // Now we can drop the enum type
     await queryInterface.sequelize.query(`
       DROP TYPE IF EXISTS "enum_employees_status";
     `);
 
+    // Create old enum type
     await queryInterface.sequelize.query(`
       CREATE TYPE "enum_employees_status" AS ENUM ('active', 'on_leave', 'terminated');
     `);
 
+    // Convert back to enum
     await queryInterface.sequelize.query(`
       ALTER TABLE employees 
       ALTER COLUMN status TYPE "enum_employees_status" USING status::"enum_employees_status";
+    `);
+
+    // Restore default
+    await queryInterface.sequelize.query(`
+      ALTER TABLE employees 
+      ALTER COLUMN status SET DEFAULT 'active';
     `);
   }
 };
