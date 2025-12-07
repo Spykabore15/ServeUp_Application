@@ -105,6 +105,45 @@
             </div>
           </div>
 
+          <!-- Pending Requests -->
+          <div v-if="isAdmin" class="dashboard-card">
+            <div class="card-header">
+              <h2>🔔 Pending Requests</h2>
+            </div>
+            <div class="card-body">
+              <div v-if="stats.pendingAccessRequests && stats.pendingAccessRequests.length === 0" class="empty-state success">
+                <div class="pending-requests-empty">
+                  <span class="empty-icon">✅</span>
+                  <p><strong>{{ stats.overview.pendingAccessRequests || 0 }}</strong></p>
+                  <p>All approved!</p>
+                </div>
+              </div>
+              <div v-else class="pending-requests-list">
+                <div 
+                  v-for="request in stats.pendingAccessRequests" 
+                  :key="request.id" 
+                  class="pending-request-item"
+                >
+                  <div class="request-info">
+                    <strong>{{ request.full_name }}</strong>
+                    <span class="request-email">{{ request.email }}</span>
+                    <span class="request-role">Role: {{ formatRole(request.requested_role) }}</span>
+                    <span class="request-date">{{ formatDate(request.created_at) }}</span>
+                  </div>
+                  <div class="request-actions">
+                    <button 
+                      @click="openApprovalModal(request)" 
+                      class="btn-approve"
+                      :disabled="processingRequest === request.id"
+                    >
+                      {{ processingRequest === request.id ? '⏳' : '✅' }} Review
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Low Stock Alert -->
           <div class="dashboard-card alert-card">
             <div class="card-header">
@@ -199,6 +238,15 @@
         </div>
       </div>
     </div>
+
+    <!-- Access Request Approval Modal -->
+    <AccessRequestApprovalModal
+      :visible="showApprovalModal"
+      :request="selectedRequest"
+      @close="closeApprovalModal"
+      @approved="handleRequestApproved"
+      @denied="handleRequestDenied"
+    />
   </div>
 </template>
 
@@ -206,9 +254,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../store/auth'
 import { useDashboardStore } from '../store/dashboard'
+import AccessRequestApprovalModal from '../components/AccessRequestApprovalModal.vue'
 
 const authStore = useAuthStore()
 const dashboardStore = useDashboardStore()
+const processingRequest = ref(null)
+const showApprovalModal = ref(false)
+const selectedRequest = ref(null)
 
 // Computed properties
 const stats = computed(() => dashboardStore.getStats)
@@ -216,6 +268,10 @@ const recentActivity = computed(() => dashboardStore.getRecentActivity)
 const isLoading = computed(() => dashboardStore.isLoadingStats)
 
 // Role-based permissions
+const isAdmin = computed(() => {
+  return authStore.userRole === 'admin'
+})
+
 const canManageProducts = computed(() => {
   const role = authStore.userRole
   return ['admin', 'responsable_stocks'].includes(role)
@@ -270,6 +326,34 @@ const formatStatus = (status) => {
     'cancelled': 'Cancelled'
   }
   return statusMap[status] || status
+}
+
+const formatRole = (role) => {
+  const roleMap = {
+    'admin': 'Admin',
+    'responsable_stocks': 'Stock Manager',
+    'responsable_employes': 'HR Manager',
+    'employe': 'Employee'
+  }
+  return roleMap[role] || role
+}
+
+const openApprovalModal = (request) => {
+  selectedRequest.value = request
+  showApprovalModal.value = true
+}
+
+const closeApprovalModal = () => {
+  showApprovalModal.value = false
+  selectedRequest.value = null
+}
+
+const handleRequestApproved = async (requestId) => {
+  await refreshDashboard()
+}
+
+const handleRequestDenied = async (requestId) => {
+  await refreshDashboard()
 }
 
 // Lifecycle
@@ -589,6 +673,109 @@ onMounted(async () => {
 .stock-quantity.critical {
   color: #dc3545;
   background: #f8d7da;
+}
+
+/* Pending Requests */
+.pending-requests-empty {
+  text-align: center;
+  padding: 2rem;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.pending-requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pending-request-item {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.request-info {
+  margin-bottom: 0.75rem;
+}
+
+.request-info strong {
+  display: block;
+  color: #2c3e50;
+  margin-bottom: 0.25rem;
+  font-size: 1rem;
+}
+
+.request-email {
+  display: block;
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+}
+
+.request-role {
+  display: inline-block;
+  font-size: 0.8rem;
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  margin-right: 0.5rem;
+}
+
+.request-date {
+  display: block;
+  font-size: 0.75rem;
+  color: #adb5bd;
+  margin-top: 0.25rem;
+}
+
+.request-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-approve,
+.btn-deny {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-approve {
+  background: #28a745;
+  color: white;
+}
+
+.btn-approve:hover:not(:disabled) {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.btn-deny {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-deny:hover:not(:disabled) {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
+.btn-approve:disabled,
+.btn-deny:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Quick Actions */

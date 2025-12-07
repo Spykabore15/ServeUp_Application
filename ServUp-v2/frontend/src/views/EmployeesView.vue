@@ -142,166 +142,14 @@
       </button>
     </div>
 
-    <!-- Add/Edit Modal -->
-    <div v-if="showModal" class="modal" @click.self="closeModal">
-      <div class="modal-content modal-large">
-        <div class="modal-header">
-          <h2>{{ isEditMode ? '✏️ Edit Employee' : '➕ Add New Employee' }}</h2>
-          <button @click="closeModal" class="close-button">&times;</button>
-        </div>
-
-        <form @submit.prevent="handleSubmit" class="employee-form">
-          <!-- Personal Information Section -->
-          <div class="form-section">
-            <h3 class="section-title">👤 Personal Information</h3>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="first_name">First Name *</label>
-                <input
-                  v-model="formData.first_name"
-                  id="first_name"
-                  type="text"
-                  required
-                  class="form-control"
-                  placeholder="e.g., John"
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="last_name">Last Name *</label>
-                <input
-                  v-model="formData.last_name"
-                  id="last_name"
-                  type="text"
-                  required
-                  class="form-control"
-                  placeholder="e.g., Doe"
-                />
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label for="email">Email *</label>
-                <input
-                  v-model="formData.email"
-                  id="email"
-                  type="email"
-                  required
-                  class="form-control"
-                  placeholder="john.doe@example.com"
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="phone">Phone *</label>
-                <input
-                  v-model="formData.phone"
-                  id="phone"
-                  type="tel"
-                  required
-                  class="form-control"
-                  placeholder="+1 234 567 8900"
-                />
-              </div>
-            </div>
-
-            <div class="form-group full-width">
-              <label for="address">Address</label>
-              <textarea
-                v-model="formData.address"
-                id="address"
-                rows="2"
-                class="form-control"
-                placeholder="123 Main Street, City, State, ZIP"
-              ></textarea>
-            </div>
-          </div>
-
-          <!-- Employment Details Section -->
-          <div class="form-section">
-            <h3 class="section-title">💼 Employment Details</h3>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="position">Position *</label>
-                <input
-                  v-model="formData.position"
-                  id="position"
-                  type="text"
-                  required
-                  class="form-control"
-                  placeholder="e.g., Head Chef, Waiter, Manager"
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="hire_date">Hire Date *</label>
-                <input
-                  v-model="formData.hire_date"
-                  id="hire_date"
-                  type="date"
-                  required
-                  class="form-control"
-                />
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label for="salary">Monthly Salary (€)</label>
-                <input
-                  v-model.number="formData.salary"
-                  id="salary"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  class="form-control"
-                  placeholder="2500.00"
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="status">Employment Status *</label>
-                <select
-                  v-model="formData.status"
-                  id="status"
-                  required
-                  class="form-control"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="on_leave">On Leave</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Emergency Contact Section -->
-          <div class="form-section">
-            <h3 class="section-title">🚨 Emergency Contact</h3>
-            <div class="form-group full-width">
-              <label for="emergency_contact">Contact Details</label>
-              <input
-                v-model="formData.emergency_contact"
-                id="emergency_contact"
-                type="text"
-                class="form-control"
-                placeholder="e.g., Jane Doe - Mother - +1 234 567 8901"
-              />
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button type="button" @click="closeModal" class="btn btn-secondary">
-              ❌ Cancel
-            </button>
-            <button type="submit" class="btn btn-primary" :disabled="isLoading">
-              {{ isLoading ? '⏳ Saving...' : (isEditMode ? '💾 Update Employee' : '✅ Add Employee') }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <!-- Universal Form Modal -->
+    <UniversalFormModal
+      :visible="showModal"
+      entity-type="employee"
+      :edit-data="editData"
+      @close="closeModal"
+      @success="handleFormSuccess"
+    />
 
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteModal" class="modal" @click.self="showDeleteModal = false">
@@ -325,6 +173,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useEmployeeStore } from '../store/employees'
 import { useAuthStore } from '../store/auth'
+import UniversalFormModal from '../components/UniversalFormModal.vue'
 
 const employeeStore = useEmployeeStore()
 const authStore = useAuthStore()
@@ -346,22 +195,8 @@ let searchTimeout = null
 // Modal state
 const showModal = ref(false)
 const showDeleteModal = ref(false)
-const isEditMode = ref(false)
 const employeeToDelete = ref(null)
-
-// Form data
-const formData = ref({
-  first_name: '',
-  last_name: '',
-  email: '',
-  phone: '',
-  position: '',
-  hire_date: '',
-  salary: null,
-  status: 'active',
-  address: '',
-  emergency_contact: ''
-})
+const editData = ref(null)
 
 // Lifecycle
 onMounted(async () => {
@@ -398,25 +233,12 @@ const goToPage = (page) => {
 }
 
 const openAddModal = () => {
-  isEditMode.value = false
-  formData.value = {
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    position: '',
-    hire_date: '',
-    salary: null,
-    status: 'active',
-    address: '',
-    emergency_contact: ''
-  }
+  editData.value = null
   showModal.value = true
 }
 
 const openEditModal = (employee) => {
-  isEditMode.value = true
-  formData.value = {
+  editData.value = {
     id: employee.id,
     first_name: employee.first_name,
     last_name: employee.last_name,
@@ -434,50 +256,13 @@ const openEditModal = (employee) => {
 
 const closeModal = () => {
   showModal.value = false
-  formData.value = {
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    position: '',
-    hire_date: '',
-    salary: null,
-    status: 'active',
-    address: '',
-    emergency_contact: ''
-  }
+  editData.value = null
 }
 
-const handleSubmit = async () => {
-  try {
-    // Clean up the form data before submitting
-    const cleanedData = {
-      first_name: formData.value.first_name,
-      last_name: formData.value.last_name,
-      email: formData.value.email,
-      phone: formData.value.phone,
-      position: formData.value.position,
-      hire_date: formData.value.hire_date,
-      status: formData.value.status,
-      salary: formData.value.salary || null,
-      address: formData.value.address || null,
-      emergency_contact: formData.value.emergency_contact || null
-    };
-
-    if (isEditMode.value) {
-      await employeeStore.updateEmployee(formData.value.id, cleanedData)
-      closeModal()
-      alert('✅ Employee updated successfully!')
-    } else {
-      await employeeStore.createEmployee(cleanedData)
-      closeModal()
-      alert('✅ Employee created successfully!')
-    }
-  } catch (error) {
-    const errorMessage = error.response?.data?.message || error.message || 'An error occurred'
-    alert('❌ Error: ' + errorMessage)
-    console.error('Submit error:', error)
-  }
+const handleFormSuccess = async (result) => {
+  // Refresh the employee list after successful create/update
+  await employeeStore.fetchEmployees()
+  closeModal()
 }
 
 const confirmDelete = (employee) => {

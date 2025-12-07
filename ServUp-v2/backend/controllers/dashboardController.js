@@ -1,4 +1,4 @@
-const { User, Employee, Product, Order, Supplier, sequelize } = require('../models');
+const { Employee, Product, Order, Supplier, AccessRequest, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
 /**
@@ -11,9 +11,11 @@ const getDashboardStats = async (req, res) => {
 
     // Get current date and date 30 days ago
     const now = new Date();
-    const thirtyDaysAgo = new Date(now.setDate(now.getDate() - 30));
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     // Fetch all statistics in parallel
+    // Note: AccessRequest queries are wrapped in try-catch in case table doesn't exist yet
     const [
       totalProducts,
       lowStockProducts,
@@ -51,12 +53,13 @@ const getDashboardStats = async (req, res) => {
       Order.findAll({
         limit: 5,
         order: [['created_at', 'DESC']],
-        attributes: ['id', 'order_number', 'total_amount', 'status', 'created_at'],
+        attributes: ['id', 'order_number', 'total_amount', 'status', 'created_at', 'customer_name'],
         include: [
           {
-            model: User,
-            as: 'user',
-            attributes: ['username']
+            model: Employee,
+            as: 'server',
+            attributes: ['id', 'first_name', 'last_name'],
+            required: false
           }
         ]
       }),
@@ -85,6 +88,22 @@ const getDashboardStats = async (req, res) => {
       })
     ]);
 
+    // Fetch access requests separately with error handling
+    let pendingAccessRequestsCount = 0;
+    let pendingAccessRequestsList = [];
+    try {
+      pendingAccessRequestsCount = await AccessRequest.count({ where: { status: 'pending' } });
+      pendingAccessRequestsList = await AccessRequest.findAll({
+        where: { status: 'pending' },
+        limit: 5,
+        order: [['created_at', 'DESC']],
+        attributes: ['id', 'full_name', 'email', 'username', 'requested_role', 'reason', 'created_at']
+      });
+    } catch (error) {
+      // Table doesn't exist yet - this is fine, just use defaults
+      console.warn('AccessRequest table not found - migration may not have run yet:', error.message);
+    }
+
     // Calculate total revenue from all orders
     const revenueResult = await Order.findOne({
       attributes: [[sequelize.fn('SUM', sequelize.col('total_amount')), 'totalRevenue']],
@@ -103,19 +122,22 @@ const getDashboardStats = async (req, res) => {
           totalEmployees,
           activeEmployees,
           totalSuppliers,
-          totalRevenue
+          totalRevenue,
+          pendingAccessRequests: pendingAccessRequestsCount
         },
         recentOrders,
         lowStockItems,
+        pendingAccessRequests: pendingAccessRequestsList || [],
         monthlyStats: monthlyOrderStats
       }
     });
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
+    console.error('Stack trace:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Error fetching dashboard statistics',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 };
@@ -132,12 +154,13 @@ const getRecentActivity = async (req, res) => {
       Order.findAll({
         limit: Math.floor(limit / 3),
         order: [['created_at', 'DESC']],
-        attributes: ['id', 'order_number', 'status', 'created_at'],
+        attributes: ['id', 'order_number', 'status', 'created_at', 'customer_name'],
         include: [
           {
-            model: User,
-            as: 'user',
-            attributes: ['username']
+            model: Employee,
+            as: 'server',
+            attributes: ['id', 'first_name', 'last_name'],
+            required: false
           }
         ]
       }),
@@ -159,12 +182,15 @@ const getRecentActivity = async (req, res) => {
     const activities = [];
 
     recentOrders.forEach(order => {
+      const serverName = order.server 
+        ? `${order.server.first_name} ${order.server.last_name}`
+        : 'System';
       activities.push({
         type: 'order',
         icon: '🛒',
         title: `Order ${order.order_number}`,
-        description: `Status: ${order.status}`,
-        user: order.user?.username || 'System',
+        description: `Status: ${order.status} - Customer: ${order.customer_name}`,
+        user: serverName,
         timestamp: order.created_at
       });
     });
@@ -200,10 +226,11 @@ const getRecentActivity = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching recent activity:', error);
+    console.error('Stack trace:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Error fetching recent activity',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 };

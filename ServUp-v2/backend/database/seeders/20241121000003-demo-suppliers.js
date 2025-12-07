@@ -53,7 +53,20 @@ module.exports = {
       }
     ];
 
-    await queryInterface.bulkInsert('suppliers', suppliers, {});
+    // Check if suppliers already exist
+    const existingSuppliers = await queryInterface.sequelize.query(
+      `SELECT name FROM suppliers WHERE name IN ('Ferme de la Vallée', 'Boulangerie du Coin', 'Grossiste Boissons Express', 'Viandes Premium')`,
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+
+    const existingNames = existingSuppliers.map(s => s.name);
+
+    // Only insert suppliers that don't exist
+    const suppliersToCreate = suppliers.filter(s => !existingNames.includes(s.name));
+
+    if (suppliersToCreate.length > 0) {
+      await queryInterface.bulkInsert('suppliers', suppliersToCreate, {});
+    }
   },
 
   down: async (queryInterface, Sequelize) => {

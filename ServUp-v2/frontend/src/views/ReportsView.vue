@@ -76,7 +76,9 @@
 
       <div class="chart-container">
         <h3>Daily Revenue Trend (Last 30 Days)</h3>
-        <canvas ref="salesChart"></canvas>
+        <div style="position: relative; height: 400px;">
+          <canvas ref="salesChart"></canvas>
+        </div>
       </div>
     </div>
 
@@ -116,11 +118,15 @@
       <div class="charts-row">
         <div class="chart-container half">
           <h3>Products by Category</h3>
-          <canvas ref="categoryChart"></canvas>
+          <div style="position: relative; height: 300px;">
+            <canvas ref="categoryChart"></canvas>
+          </div>
         </div>
         <div class="chart-container half">
           <h3>Products by Supplier</h3>
-          <canvas ref="supplierProductsChart"></canvas>
+          <div style="position: relative; height: 300px;">
+            <canvas ref="supplierProductsChart"></canvas>
+          </div>
         </div>
       </div>
 
@@ -168,7 +174,9 @@
 
       <div class="chart-container">
         <h3>Employees by Position</h3>
-        <canvas ref="positionChart"></canvas>
+        <div style="position: relative; height: 400px;">
+          <canvas ref="positionChart"></canvas>
+        </div>
       </div>
 
       <div class="stat-card info single">
@@ -209,11 +217,15 @@
       <div class="charts-row">
         <div class="chart-container half">
           <h3>Suppliers by Rating</h3>
-          <canvas ref="ratingChart"></canvas>
+          <div style="position: relative; height: 300px;">
+            <canvas ref="ratingChart"></canvas>
+          </div>
         </div>
         <div class="chart-container half">
           <h3>Top 10 Suppliers by Products</h3>
-          <canvas ref="topSuppliersChart"></canvas>
+          <div style="position: relative; height: 300px;">
+            <canvas ref="topSuppliersChart"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -307,11 +319,19 @@ const loadSalesData = async () => {
       salesFilters.value.startDate || null,
       salesFilters.value.endDate || null
     );
+    console.log('Sales analytics response:', response);
     
-    if (response.success) {
+    if (response && response.success) {
       salesData.value = response.data;
+      console.log('Sales data loaded:', salesData.value);
+      // Wait for DOM update and ensure canvas is ready
       await nextTick();
-      renderSalesChart();
+      setTimeout(() => {
+        renderSalesChart();
+      }, 100);
+    } else {
+      console.error('Invalid response format:', response);
+      errorMessage.value = 'Invalid response from server';
     }
   } catch (error) {
     console.error('Error loading sales data:', error);
@@ -323,11 +343,18 @@ const loadSalesData = async () => {
 const loadInventoryData = async () => {
   try {
     const response = await reportService.getInventoryAnalytics();
+    console.log('Inventory analytics response:', response);
     
-    if (response.success) {
+    if (response && response.success) {
       inventoryData.value = response.data;
+      console.log('Inventory data loaded:', inventoryData.value);
       await nextTick();
-      renderInventoryCharts();
+      setTimeout(() => {
+        renderInventoryCharts();
+      }, 100);
+    } else {
+      console.error('Invalid response format:', response);
+      errorMessage.value = 'Invalid response from server';
     }
   } catch (error) {
     console.error('Error loading inventory data:', error);
@@ -339,11 +366,18 @@ const loadInventoryData = async () => {
 const loadEmployeeData = async () => {
   try {
     const response = await reportService.getEmployeeAnalytics();
+    console.log('Employee analytics response:', response);
     
-    if (response.success) {
+    if (response && response.success) {
       employeeData.value = response.data;
+      console.log('Employee data loaded:', employeeData.value);
       await nextTick();
-      renderEmployeeCharts();
+      setTimeout(() => {
+        renderEmployeeCharts();
+      }, 100);
+    } else {
+      console.error('Invalid response format:', response);
+      errorMessage.value = 'Invalid response from server';
     }
   } catch (error) {
     console.error('Error loading employee data:', error);
@@ -355,11 +389,18 @@ const loadEmployeeData = async () => {
 const loadSupplierData = async () => {
   try {
     const response = await reportService.getSupplierAnalytics();
+    console.log('Supplier analytics response:', response);
     
-    if (response.success) {
+    if (response && response.success) {
       supplierData.value = response.data;
+      console.log('Supplier data loaded:', supplierData.value);
       await nextTick();
-      renderSupplierCharts();
+      setTimeout(() => {
+        renderSupplierCharts();
+      }, 100);
+    } else {
+      console.error('Invalid response format:', response);
+      errorMessage.value = 'Invalid response from server';
     }
   } catch (error) {
     console.error('Error loading supplier data:', error);
@@ -408,36 +449,68 @@ const clearDateFilters = () => {
 const renderSalesChart = () => {
   if (salesChartInstance) {
     salesChartInstance.destroy();
+    salesChartInstance = null;
   }
 
-  if (!salesChart.value || !salesData.value.revenueData.length) return;
+  if (!salesChart.value || !salesData.value.revenueData || !salesData.value.revenueData.length) {
+    console.warn('Cannot render sales chart: missing canvas or data', {
+      hasCanvas: !!salesChart.value,
+      hasData: !!salesData.value.revenueData,
+      dataLength: salesData.value.revenueData?.length || 0
+    });
+    return;
+  }
 
-  const ctx = salesChart.value.getContext('2d');
-  salesChartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: salesData.value.revenueData.map(item => item.date),
-      datasets: [
-        {
-          label: 'Revenue (€)',
-          data: salesData.value.revenueData.map(item => item.revenue),
-          borderColor: '#667eea',
-          backgroundColor: 'rgba(102, 126, 234, 0.1)',
-          fill: true,
-          tension: 0.4,
-          yAxisID: 'y'
-        },
-        {
-          label: 'Orders',
-          data: salesData.value.revenueData.map(item => item.orderCount),
-          borderColor: '#48bb78',
-          backgroundColor: 'rgba(72, 187, 120, 0.1)',
-          fill: true,
-          tension: 0.4,
-          yAxisID: 'y1'
-        }
-      ]
-    },
+  try {
+    const ctx = salesChart.value.getContext('2d');
+    if (!ctx) {
+      console.error('Failed to get canvas context');
+      return;
+    }
+
+    // Ensure canvas has proper dimensions
+    const container = salesChart.value.parentElement;
+    if (container) {
+      salesChart.value.width = container.clientWidth;
+      salesChart.value.height = container.clientHeight || 400;
+    }
+
+    // Ensure data is numeric
+    const revenueData = salesData.value.revenueData.map(item => parseFloat(item.revenue) || 0);
+    const orderCountData = salesData.value.revenueData.map(item => parseInt(item.orderCount) || 0);
+    const labels = salesData.value.revenueData.map(item => {
+      // Format date for display
+      const date = new Date(item.date);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+
+    console.log('Rendering sales chart with data:', { labels, revenueData, orderCountData });
+
+    salesChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Revenue (€)',
+            data: revenueData,
+            borderColor: '#667eea',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            fill: true,
+            tension: 0.4,
+            yAxisID: 'y'
+          },
+          {
+            label: 'Orders',
+            data: orderCountData,
+            borderColor: '#48bb78',
+            backgroundColor: 'rgba(72, 187, 120, 0.1)',
+            fill: true,
+            tension: 0.4,
+            yAxisID: 'y1'
+          }
+        ]
+      },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -470,153 +543,260 @@ const renderSalesChart = () => {
       }
     }
   });
+  } catch (error) {
+    console.error('Error rendering sales chart:', error);
+  }
 };
 
 // Render inventory charts
 const renderInventoryCharts = () => {
   // Destroy existing charts
-  if (categoryChartInstance) categoryChartInstance.destroy();
-  if (supplierProductsChartInstance) supplierProductsChartInstance.destroy();
+  if (categoryChartInstance) {
+    categoryChartInstance.destroy();
+    categoryChartInstance = null;
+  }
+  if (supplierProductsChartInstance) {
+    supplierProductsChartInstance.destroy();
+    supplierProductsChartInstance = null;
+  }
 
   // Category chart
-  if (categoryChart.value && inventoryData.value.categoryData.length) {
-    const ctx = categoryChart.value.getContext('2d');
-    categoryChartInstance = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: inventoryData.value.categoryData.map(item => item.category),
-        datasets: [{
-          data: inventoryData.value.categoryData.map(item => item.count),
-          backgroundColor: [
-            '#667eea', '#48bb78', '#f6ad55', '#fc8181', '#63b3ed', '#9f7aea'
-          ]
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false
+  if (categoryChart.value && inventoryData.value.categoryData && inventoryData.value.categoryData.length) {
+    try {
+      const ctx = categoryChart.value.getContext('2d');
+      if (!ctx) return;
+
+      // Ensure canvas has proper dimensions
+      const container = categoryChart.value.parentElement;
+      if (container) {
+        categoryChart.value.width = container.clientWidth;
+        categoryChart.value.height = container.clientHeight || 300;
       }
-    });
+
+      categoryChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: inventoryData.value.categoryData.map(item => item.category || 'Unknown'),
+          datasets: [{
+            data: inventoryData.value.categoryData.map(item => parseInt(item.count) || 0),
+            backgroundColor: [
+              '#667eea', '#48bb78', '#f6ad55', '#fc8181', '#63b3ed', '#9f7aea'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+    } catch (error) {
+      console.error('Error rendering category chart:', error);
+    }
   }
 
   // Supplier products chart
-  if (supplierProductsChart.value && inventoryData.value.supplierData.length) {
-    const ctx = supplierProductsChart.value.getContext('2d');
-    supplierProductsChartInstance = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: inventoryData.value.supplierData.map(item => item.supplier),
-        datasets: [{
-          label: 'Products',
-          data: inventoryData.value.supplierData.map(item => item.count),
-          backgroundColor: '#667eea'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true
+  if (supplierProductsChart.value && inventoryData.value.supplierData && inventoryData.value.supplierData.length) {
+    try {
+      const ctx = supplierProductsChart.value.getContext('2d');
+      if (!ctx) return;
+
+      // Ensure canvas has proper dimensions
+      const container = supplierProductsChart.value.parentElement;
+      if (container) {
+        supplierProductsChart.value.width = container.clientWidth;
+        supplierProductsChart.value.height = container.clientHeight || 300;
+      }
+
+      supplierProductsChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: inventoryData.value.supplierData.map(item => item.supplier || 'Unknown'),
+          datasets: [{
+            label: 'Products',
+            data: inventoryData.value.supplierData.map(item => parseInt(item.count) || 0),
+            backgroundColor: '#667eea'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
           }
         }
-      }
-    });
+      });
+    } catch (error) {
+      console.error('Error rendering supplier products chart:', error);
+    }
   }
 };
 
 // Render employee charts
 const renderEmployeeCharts = () => {
-  if (positionChartInstance) positionChartInstance.destroy();
+  if (positionChartInstance) {
+    positionChartInstance.destroy();
+    positionChartInstance = null;
+  }
 
-  if (positionChart.value && employeeData.value.positionData.length) {
-    const ctx = positionChart.value.getContext('2d');
-    positionChartInstance = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: employeeData.value.positionData.map(item => item.position),
-        datasets: [{
-          label: 'Employees',
-          data: employeeData.value.positionData.map(item => item.count),
-          backgroundColor: '#667eea'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true
+  if (positionChart.value && employeeData.value.positionData && employeeData.value.positionData.length) {
+    try {
+      const ctx = positionChart.value.getContext('2d');
+      if (!ctx) return;
+
+      // Ensure canvas has proper dimensions
+      const container = positionChart.value.parentElement;
+      if (container) {
+        positionChart.value.width = container.clientWidth;
+        positionChart.value.height = container.clientHeight || 400;
+      }
+
+      positionChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: employeeData.value.positionData.map(item => item.position || 'Unknown'),
+          datasets: [{
+            label: 'Employees',
+            data: employeeData.value.positionData.map(item => parseInt(item.count) || 0),
+            backgroundColor: '#667eea'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
           }
         }
-      }
-    });
+      });
+    } catch (error) {
+      console.error('Error rendering position chart:', error);
+    }
   }
 };
 
 // Render supplier charts
 const renderSupplierCharts = () => {
-  if (ratingChartInstance) ratingChartInstance.destroy();
-  if (topSuppliersChartInstance) topSuppliersChartInstance.destroy();
+  if (ratingChartInstance) {
+    ratingChartInstance.destroy();
+    ratingChartInstance = null;
+  }
+  if (topSuppliersChartInstance) {
+    topSuppliersChartInstance.destroy();
+    topSuppliersChartInstance = null;
+  }
 
   // Rating chart
-  if (ratingChart.value && supplierData.value.ratingData.length) {
-    const ctx = ratingChart.value.getContext('2d');
-    ratingChartInstance = new Chart(ctx, {
-      type: 'pie',
-      data: {
-        labels: supplierData.value.ratingData.map(item => `${item.rating} ⭐`),
-        datasets: [{
-          data: supplierData.value.ratingData.map(item => item.count),
-          backgroundColor: [
-            '#48bb78', '#68d391', '#9ae6b4', '#c6f6d5', '#f0fff4'
-          ]
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false
+  if (ratingChart.value && supplierData.value.ratingData && supplierData.value.ratingData.length) {
+    try {
+      const ctx = ratingChart.value.getContext('2d');
+      if (!ctx) return;
+
+      // Ensure canvas has proper dimensions
+      const container = ratingChart.value.parentElement;
+      if (container) {
+        ratingChart.value.width = container.clientWidth;
+        ratingChart.value.height = container.clientHeight || 300;
       }
-    });
+
+      ratingChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: supplierData.value.ratingData.map(item => `${item.rating || 0} ⭐`),
+          datasets: [{
+            data: supplierData.value.ratingData.map(item => parseInt(item.count) || 0),
+            backgroundColor: [
+              '#48bb78', '#68d391', '#9ae6b4', '#c6f6d5', '#f0fff4'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+    } catch (error) {
+      console.error('Error rendering rating chart:', error);
+    }
   }
 
   // Top suppliers chart
-  if (topSuppliersChart.value && supplierData.value.topSuppliers.length) {
-    const ctx = topSuppliersChart.value.getContext('2d');
-    topSuppliersChartInstance = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: supplierData.value.topSuppliers.map(item => item.supplier),
-        datasets: [{
-          label: 'Products Supplied',
-          data: supplierData.value.topSuppliers.map(item => item.productCount),
-          backgroundColor: '#667eea'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        indexAxis: 'y',
-        scales: {
-          x: {
-            beginAtZero: true
+  if (topSuppliersChart.value && supplierData.value.topSuppliers && supplierData.value.topSuppliers.length) {
+    try {
+      const ctx = topSuppliersChart.value.getContext('2d');
+      if (!ctx) return;
+
+      // Ensure canvas has proper dimensions
+      const container = topSuppliersChart.value.parentElement;
+      if (container) {
+        topSuppliersChart.value.width = container.clientWidth;
+        topSuppliersChart.value.height = container.clientHeight || 300;
+      }
+
+      topSuppliersChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: supplierData.value.topSuppliers.map(item => item.supplier || 'Unknown'),
+          datasets: [{
+            label: 'Products Supplied',
+            data: supplierData.value.topSuppliers.map(item => parseInt(item.productCount) || 0),
+            backgroundColor: '#667eea'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'y',
+          scales: {
+            x: {
+              beginAtZero: true
+            }
           }
         }
-      }
-    });
+      });
+    } catch (error) {
+      console.error('Error rendering top suppliers chart:', error);
+    }
   }
 };
 
 // Watch active tab changes
-watch(activeTab, () => {
-  loadData();
+watch(activeTab, async (newTab) => {
+  await loadData();
+  // Re-render charts after tab change to ensure they're visible
+  await nextTick();
+  setTimeout(() => {
+    switch (newTab) {
+      case 'sales':
+        renderSalesChart();
+        break;
+      case 'inventory':
+        renderInventoryCharts();
+        break;
+      case 'employees':
+        renderEmployeeCharts();
+        break;
+      case 'suppliers':
+        renderSupplierCharts();
+        break;
+    }
+  }, 200);
 });
 
 // Initialize on mount
-onMounted(() => {
-  // Load data for the first tab after a short delay
-  setTimeout(() => {
-    loadData();
+onMounted(async () => {
+  // Load data for the first tab after a short delay to ensure DOM is ready
+  await nextTick();
+  setTimeout(async () => {
+    await loadData();
+    // Render chart after data loads
+    await nextTick();
+    setTimeout(() => {
+      renderSalesChart();
+    }, 200);
   }, 300);
 });
 </script>
@@ -882,6 +1062,7 @@ onMounted(() => {
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   margin-bottom: 2rem;
+  min-height: 450px;
 }
 
 .chart-container h3 {
@@ -893,6 +1074,9 @@ onMounted(() => {
 
 .chart-container canvas {
   max-height: 400px;
+  height: 400px !important;
+  width: 100% !important;
+  display: block;
 }
 
 .charts-row {
@@ -902,8 +1086,15 @@ onMounted(() => {
   margin-bottom: 2rem;
 }
 
+.chart-container.half {
+  min-height: 350px;
+}
+
 .chart-container.half canvas {
   max-height: 300px;
+  height: 300px !important;
+  width: 100% !important;
+  display: block;
 }
 
 /* Responsive */

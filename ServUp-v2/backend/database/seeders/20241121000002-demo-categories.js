@@ -2,6 +2,14 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
+    // Check if categories already exist
+    const existingCategories = await queryInterface.sequelize.query(
+      `SELECT name FROM categories WHERE name IN ('Légumes', 'Viandes', 'Boissons', 'Produits Laitiers', 'Pains et Pâtisseries')`,
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+
+    const existingNames = existingCategories.map(c => c.name);
+
     const categories = [
       {
         name: 'Légumes',
@@ -30,7 +38,12 @@ module.exports = {
       }
     ];
 
-    await queryInterface.bulkInsert('categories', categories, {});
+    // Only insert categories that don't exist
+    const categoriesToCreate = categories.filter(c => !existingNames.includes(c.name));
+
+    if (categoriesToCreate.length > 0) {
+      await queryInterface.bulkInsert('categories', categoriesToCreate, {});
+    }
   },
 
   down: async (queryInterface, Sequelize) => {

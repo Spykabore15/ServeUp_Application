@@ -55,18 +55,29 @@ module.exports = (sequelize) => {
     timestamps: true,
     underscored: true,
     hooks: {
-      // Hash password before creating user
+      // Hash password before creating user (only if not already hashed)
       beforeCreate: async (user) => {
         if (user.password_hash) {
-          const salt = await bcrypt.genSalt(10);
-          user.password_hash = await bcrypt.hash(user.password_hash, salt);
+          // Check if password is already hashed (bcrypt hashes start with $2a$, $2b$, or $2y$)
+          // Format: $2[ayb]$[cost]$[22 character salt][31 character hash]
+          const isAlreadyHashed = /^\$2[ayb]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(user.password_hash);
+          if (!isAlreadyHashed) {
+            const { BCRYPT } = require('../utils/constants');
+            const salt = await bcrypt.genSalt(BCRYPT.SALT_ROUNDS);
+            user.password_hash = await bcrypt.hash(user.password_hash, salt);
+          }
         }
       },
-      // Hash password before updating if it changed
+      // Hash password before updating if it changed (only if not already hashed)
       beforeUpdate: async (user) => {
         if (user.changed('password_hash')) {
-          const salt = await bcrypt.genSalt(10);
-          user.password_hash = await bcrypt.hash(user.password_hash, salt);
+          // Check if password is already hashed (bcrypt hashes start with $2a$, $2b$, or $2y$)
+          const isAlreadyHashed = /^\$2[ayb]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(user.password_hash);
+          if (!isAlreadyHashed) {
+            const { BCRYPT } = require('../utils/constants');
+            const salt = await bcrypt.genSalt(BCRYPT.SALT_ROUNDS);
+            user.password_hash = await bcrypt.hash(user.password_hash, salt);
+          }
         }
       }
     }

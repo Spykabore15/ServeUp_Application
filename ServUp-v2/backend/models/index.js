@@ -29,6 +29,7 @@ const Order = require('./Order')(sequelize);
 const OrderItem = require('./OrderItem')(sequelize);
 const WasteRecord = require('./WasteRecord')(sequelize);
 const AuditLog = require('./AuditLog')(sequelize);
+const AccessRequest = require('./AccessRequest')(sequelize);
 
 // Define relationships
 // User <-> Employee (One-to-One optional)
@@ -67,6 +68,10 @@ WasteRecord.belongsTo(Employee, { foreignKey: 'reported_by', as: 'reporter' });
 User.hasMany(AuditLog, { foreignKey: 'user_id', as: 'audit_logs' });
 AuditLog.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
+// User <-> AccessRequests (One-to-Many - reviewer)
+User.hasMany(AccessRequest, { foreignKey: 'reviewed_by', as: 'reviewed_requests' });
+AccessRequest.belongsTo(User, { foreignKey: 'reviewed_by', as: 'reviewer' });
+
 // Test database connection
 const testConnection = async () => {
   try {
@@ -92,6 +97,7 @@ module.exports = {
   OrderItem,
   WasteRecord,
   AuditLog,
+  AccessRequest,
   testConnection
 };
 

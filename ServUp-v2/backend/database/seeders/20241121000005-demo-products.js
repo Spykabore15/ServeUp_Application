@@ -36,7 +36,21 @@ module.exports = {
       { name: 'Sel', description: 'Sel fin', category_id: 1, quantity: 5.00, unit: 'kg', threshold: 3.00, price_per_unit: 1.50, supplier_id: 1, sku: 'MISC003', is_active: true, created_at: new Date(), updated_at: new Date() }
     ];
 
-    await queryInterface.bulkInsert('products', products, {});
+    // Check if products already exist (by SKU)
+    const productSkus = products.map(p => p.sku).filter(s => s);
+    const existingProducts = await queryInterface.sequelize.query(
+      `SELECT sku FROM products WHERE sku IN (${productSkus.map(s => `'${s}'`).join(', ')})`,
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+
+    const existingSkus = existingProducts.map(p => p.sku);
+
+    // Only insert products that don't exist
+    const productsToCreate = products.filter(p => !p.sku || !existingSkus.includes(p.sku));
+
+    if (productsToCreate.length > 0) {
+      await queryInterface.bulkInsert('products', productsToCreate, {});
+    }
   },
 
   down: async (queryInterface, Sequelize) => {

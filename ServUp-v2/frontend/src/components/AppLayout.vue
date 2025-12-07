@@ -44,6 +44,22 @@
     <main class="main-content">
       <router-view />
     </main>
+
+    <!-- Universal Form Modal (Floating Action Button) -->
+    <div v-if="showUniversalForm" class="fab-container">
+      <button @click="openUniversalForm()" class="fab-button" title="Quick Add">
+        ➕
+      </button>
+    </div>
+
+    <!-- Universal Form Modal Component -->
+    <UniversalFormModal
+      :visible="universalFormVisible"
+      :entity-type="selectedEntityType"
+      :edit-data="editData"
+      @close="closeUniversalForm"
+      @success="handleFormSuccess"
+    />
   </div>
 </template>
 
@@ -52,6 +68,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
 import { useSettingsStore } from '../store/settings'
+import UniversalFormModal from './UniversalFormModal.vue'
 import logoImage from '../assets/logo.png'
 
 const router = useRouter()
@@ -99,6 +116,42 @@ const handleLogout = async () => {
   await authStore.logout()
   router.push('/login')
 }
+
+// Universal Form Modal
+const universalFormVisible = ref(false)
+const selectedEntityType = ref(null)
+const editData = ref(null)
+
+const showUniversalForm = computed(() => {
+  // Show FAB if user has permission to add at least one entity type
+  const role = authStore.user?.role
+  return role === 'admin' || 
+         role === 'responsable_stocks' || 
+         role === 'responsable_employes'
+})
+
+const openUniversalForm = (entityType = null) => {
+  selectedEntityType.value = entityType
+  editData.value = null
+  universalFormVisible.value = true
+}
+
+const closeUniversalForm = () => {
+  universalFormVisible.value = false
+  selectedEntityType.value = null
+  editData.value = null
+}
+
+const handleFormSuccess = (result) => {
+  // Refresh current view if needed
+  // The individual views will handle their own refresh
+  console.log('Form success:', result)
+}
+
+// Expose method for child components to open the modal
+defineExpose({
+  openUniversalForm
+})
 </script>
 
 <style scoped>
@@ -334,6 +387,52 @@ const handleLogout = async () => {
 
 :global(.dark-mode) .nav-item.router-link-active {
   background: rgba(52, 152, 219, 0.15);
+}
+
+/* Floating Action Button */
+.fab-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 999;
+}
+
+.fab-button {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fab-button:hover {
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.fab-button:active {
+  transform: scale(0.95) rotate(90deg);
+}
+
+@media (max-width: 768px) {
+  .fab-container {
+    bottom: 1rem;
+    right: 1rem;
+  }
+
+  .fab-button {
+    width: 56px;
+    height: 56px;
+    font-size: 1.5rem;
+  }
 }
 </style>
 

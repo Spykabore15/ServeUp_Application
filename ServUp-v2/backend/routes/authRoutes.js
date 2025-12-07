@@ -6,6 +6,7 @@ const authController = require('../controllers/authController');
 
 // Middleware
 const authMiddleware = require('../middleware/authMiddleware');
+const { authLimiter } = require('../middleware/rateLimiter');
 
 // Validators
 const {
@@ -15,9 +16,10 @@ const {
   handleValidationErrors
 } = require('../validators/authValidators');
 
-// Public routes
+// Public routes (with rate limiting)
 router.post(
   '/register',
+  authLimiter,
   registerValidation,
   handleValidationErrors,
   authController.register
@@ -25,6 +27,7 @@ router.post(
 
 router.post(
   '/login',
+  authLimiter,
   loginValidation,
   handleValidationErrors,
   authController.login

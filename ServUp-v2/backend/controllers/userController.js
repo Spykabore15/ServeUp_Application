@@ -1,6 +1,6 @@
 const { User, Employee } = require('../models');
 const { Op } = require('sequelize');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 
 /**
  * Get all users with pagination and filters

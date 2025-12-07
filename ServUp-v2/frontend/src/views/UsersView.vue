@@ -162,135 +162,14 @@
       </button>
     </div>
 
-    <!-- Add/Edit Modal -->
-    <div v-if="showModal" class="modal" @click.self="closeModal">
-      <div class="modal-content modal-large">
-        <div class="modal-header">
-          <h2>{{ isEditMode ? '✏️ Edit User' : '➕ Add New User' }}</h2>
-          <button @click="closeModal" class="close-button">&times;</button>
-        </div>
-
-        <form @submit.prevent="handleSubmit" class="user-form">
-          <!-- Account Information -->
-          <div class="form-section">
-            <h3 class="section-title">🔐 Account Information</h3>
-            
-            <div class="form-row">
-              <div class="form-group">
-                <label for="username">Username *</label>
-                <input
-                  v-model="formData.username"
-                  id="username"
-                  type="text"
-                  required
-                  class="form-control"
-                  placeholder="e.g., johndoe"
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="email">Email *</label>
-                <input
-                  v-model="formData.email"
-                  id="email"
-                  type="email"
-                  required
-                  class="form-control"
-                  placeholder="user@example.com"
-                />
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label for="password">
-                  Password {{ isEditMode ? '(leave blank to keep current)' : '*' }}
-                </label>
-                <input
-                  v-model="formData.password"
-                  id="password"
-                  type="password"
-                  :required="!isEditMode"
-                  class="form-control"
-                  placeholder="Minimum 6 characters"
-                  minlength="6"
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="role">Role *</label>
-                <select
-                  v-model="formData.role"
-                  id="role"
-                  required
-                  class="form-control"
-                >
-                  <option value="">Select a role</option>
-                  <option value="admin">Admin</option>
-                  <option value="responsable_stocks">Stock Manager</option>
-                  <option value="responsable_employes">Employee Manager</option>
-                  <option value="employe">Employee</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Employee Link -->
-          <div class="form-section">
-            <h3 class="section-title">👥 Link to Employee (Optional)</h3>
-            
-            <div class="form-group full-width">
-              <label for="employee_id">Employee</label>
-              <select
-                v-model="formData.employee_id"
-                id="employee_id"
-                class="form-control"
-              >
-                <option :value="null">Not linked to any employee</option>
-                <option 
-                  v-for="employee in availableEmployees" 
-                  :key="employee.id" 
-                  :value="employee.id"
-                >
-                  {{ employee.first_name }} {{ employee.last_name }} - {{ employee.position }}
-                </option>
-              </select>
-              <small class="form-hint">
-                Linking a user to an employee allows the employee to access the system.
-              </small>
-            </div>
-          </div>
-
-          <!-- Account Status -->
-          <div class="form-section">
-            <h3 class="section-title">⚙️ Account Status</h3>
-            
-            <div class="form-group full-width">
-              <label class="checkbox-label">
-                <input
-                  v-model="formData.is_active"
-                  type="checkbox"
-                  class="form-checkbox"
-                />
-                <span>Account is active</span>
-              </label>
-              <small class="form-hint">
-                Inactive accounts cannot log in to the system.
-              </small>
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button type="button" @click="closeModal" class="btn btn-secondary">
-              ❌ Cancel
-            </button>
-            <button type="submit" class="btn btn-primary" :disabled="isLoading">
-              {{ isLoading ? '⏳ Saving...' : (isEditMode ? '💾 Update User' : '✅ Add User') }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <!-- Universal Form Modal -->
+    <UniversalFormModal
+      :visible="showModal"
+      entity-type="user"
+      :edit-data="editData"
+      @close="closeModal"
+      @success="handleFormSuccess"
+    />
 
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteModal" class="modal" @click.self="showDeleteModal = false">
@@ -334,6 +213,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '../store/users'
 import { useEmployeeStore } from '../store/employees'
+import UniversalFormModal from '../components/UniversalFormModal.vue'
 
 const userStore = useUserStore()
 const employeesStore = useEmployeeStore()
@@ -353,41 +233,17 @@ let searchTimeout = null
 const showModal = ref(false)
 const showDeleteModal = ref(false)
 const showToggleModal = ref(false)
-const isEditMode = ref(false)
 const userToDelete = ref(null)
 const userToToggle = ref(null)
-
-// Available employees for dropdown
-const availableEmployees = ref([])
-
-// Form data
-const formData = ref({
-  username: '',
-  email: '',
-  password: '',
-  role: '',
-  employee_id: null,
-  is_active: true
-})
+const editData = ref(null)
 
 // Lifecycle
 onMounted(async () => {
   await Promise.all([
     userStore.fetchUsers(),
-    userStore.fetchStats(),
-    loadEmployees()
+    userStore.fetchStats()
   ])
 })
-
-// Load employees for dropdown
-const loadEmployees = async () => {
-  try {
-    await employeesStore.fetchEmployees({ limit: 1000 }) // Get all employees
-    availableEmployees.value = employeesStore.getEmployees
-  } catch (error) {
-    console.error('Error loading employees:', error)
-  }
-}
 
 // Methods
 const debounceSearch = () => {
@@ -421,23 +277,13 @@ const goToPage = (page) => {
   userStore.fetchUsers()
 }
 
-const openAddModal = async () => {
-  isEditMode.value = false
-  formData.value = {
-    username: '',
-    email: '',
-    password: '',
-    role: '',
-    employee_id: null,
-    is_active: true
-  }
-  await loadEmployees() // Refresh employee list before opening modal
+const openAddModal = () => {
+  editData.value = null
   showModal.value = true
 }
 
-const openEditModal = async (user) => {
-  isEditMode.value = true
-  formData.value = {
+const openEditModal = (user) => {
+  editData.value = {
     id: user.id,
     username: user.username,
     email: user.email,
@@ -446,58 +292,18 @@ const openEditModal = async (user) => {
     employee_id: user.employee_id || null,
     is_active: user.is_active
   }
-  await loadEmployees() // Refresh employee list before opening modal
   showModal.value = true
 }
 
 const closeModal = () => {
   showModal.value = false
-  formData.value = {
-    username: '',
-    email: '',
-    password: '',
-    role: '',
-    employee_id: null,
-    is_active: true
-  }
+  editData.value = null
 }
 
-const handleSubmit = async () => {
-  try {
-    const submitData = {
-      username: formData.value.username,
-      email: formData.value.email,
-      role: formData.value.role,
-      employee_id: formData.value.employee_id,
-      is_active: formData.value.is_active
-    }
-
-    // Only include password if it's provided
-    if (formData.value.password) {
-      submitData.password = formData.value.password
-    }
-
-    if (isEditMode.value) {
-      await userStore.updateUser(formData.value.id, submitData)
-      closeModal()
-      await loadEmployees() // Refresh employee list
-      alert('✅ User updated successfully!')
-    } else {
-      // Password is required for new users
-      if (!formData.value.password) {
-        alert('❌ Password is required for new users')
-        return
-      }
-      await userStore.createUser(submitData)
-      closeModal()
-      await loadEmployees() // Refresh employee list
-      alert('✅ User created successfully!')
-    }
-  } catch (error) {
-    const errorMessage = error.response?.data?.message || error.message || 'An error occurred'
-    alert('❌ Error: ' + errorMessage)
-    console.error('Submit error:', error)
-  }
+const handleFormSuccess = async (result) => {
+  // Refresh the user list after successful create/update
+  await userStore.fetchUsers()
+  closeModal()
 }
 
 const confirmDelete = (user) => {
@@ -510,7 +316,6 @@ const handleDelete = async () => {
     await userStore.deleteUser(userToDelete.value.id)
     showDeleteModal.value = false
     userToDelete.value = null
-    await loadEmployees() // Refresh employee list
     alert('✅ User deleted successfully!')
   } catch (error) {
     const errorMessage = error.response?.data?.message || error.message || 'Failed to delete user'

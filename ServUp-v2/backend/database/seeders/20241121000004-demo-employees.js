@@ -101,7 +101,21 @@ module.exports = {
       }
     ];
 
-    await queryInterface.bulkInsert('employees', employees, {});
+    // Check if employees already exist (by email)
+    const employeeEmails = employees.map(e => e.email).filter(e => e);
+    const existingEmployees = await queryInterface.sequelize.query(
+      `SELECT email FROM employees WHERE email IN (${employeeEmails.map(e => `'${e}'`).join(', ')})`,
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+
+    const existingEmails = existingEmployees.map(e => e.email);
+
+    // Only insert employees that don't exist
+    const employeesToCreate = employees.filter(e => !e.email || !existingEmails.includes(e.email));
+
+    if (employeesToCreate.length > 0) {
+      await queryInterface.bulkInsert('employees', employeesToCreate, {});
+    }
   },
 
   down: async (queryInterface, Sequelize) => {

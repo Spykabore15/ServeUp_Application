@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { DB_POOL } = require('../utils/constants');
 
 module.exports = {
   development: {
@@ -16,12 +17,7 @@ module.exports = {
       createdAt: 'created_at',
       updatedAt: 'updated_at'
     },
-    pool: {
-      max: 5,
-      min: 0,
-      acquire: 30000,
-      idle: 10000
-    }
+    pool: DB_POOL.DEVELOPMENT
   },
   test: {
     username: process.env.DB_USER || 'postgres',
@@ -54,12 +50,7 @@ module.exports = {
       timestamps: true,
       underscored: true
     },
-    pool: {
-      max: 10,
-      min: 2,
-      acquire: 30000,
-      idle: 10000
-    }
+    pool: DB_POOL.PRODUCTION
   }
 };
 

@@ -24,9 +24,19 @@ export const useAuthStore = defineStore('auth', () => {
       console.log('🔐 Auth Store: Attempting login...')
       const response = await authService.login(username, password)
       console.log('✅ Auth Store: Login response:', response)
-      token.value = response.token
-      user.value = response.user
-      localStorage.setItem('token', response.token)
+      
+      // Handle standardized response format: { status, message, data: { token, user } }
+      // The API interceptor returns response.data (the full response body)
+      // So response = { status, message, data: { token, user } }
+      token.value = response.data?.token || response.token
+      user.value = response.data?.user || response.user
+      
+      if (!token.value || !user.value) {
+        console.error('Invalid response format:', response)
+        throw new Error('Invalid response format: missing token or user')
+      }
+      
+      localStorage.setItem('token', token.value)
       console.log('✅ Auth Store: Login successful, user:', user.value)
       
       // Load user-specific settings after login
@@ -60,7 +70,8 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const response = await authService.getCurrentUser()
-      user.value = response.user
+      // Handle standardized response format: { status, message, data: { user } }
+      user.value = response.data?.user || response.user
       
       // Load user-specific settings after fetching user
       const settingsStore = useSettingsStore()

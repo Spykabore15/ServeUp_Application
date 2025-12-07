@@ -18,7 +18,8 @@ const reportService = {
     if (endDate) params.endDate = endDate;
     
     const response = await api.get('/reports/sales', { params });
-    return response.data;
+    // Axios interceptor already returns response.data, so response is the backend response
+    return response;
   },
 
   /**
@@ -27,7 +28,8 @@ const reportService = {
    */
   async getInventoryAnalytics() {
     const response = await api.get('/reports/inventory');
-    return response.data;
+    // Axios interceptor already returns response.data, so response is the backend response
+    return response;
   },
 
   /**
@@ -36,7 +38,8 @@ const reportService = {
    */
   async getEmployeeAnalytics() {
     const response = await api.get('/reports/employees');
-    return response.data;
+    // Axios interceptor already returns response.data, so response is the backend response
+    return response;
   },
 
   /**
@@ -45,7 +48,8 @@ const reportService = {
    */
   async getSupplierAnalytics() {
     const response = await api.get('/reports/suppliers');
-    return response.data;
+    // Axios interceptor already returns response.data, so response is the backend response
+    return response;
   }
 };
 

@@ -145,126 +145,14 @@
       </button>
     </div>
 
-    <!-- Add/Edit Modal -->
-    <div v-if="showModal" class="modal" @click.self="closeModal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>{{ isEditMode ? 'Edit Product' : 'Add Product' }}</h2>
-          <button @click="closeModal" class="close-button">&times;</button>
-        </div>
-
-        <form @submit.prevent="handleSubmit" class="product-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="name">Product Name *</label>
-              <input
-                v-model="formData.name"
-                id="name"
-                type="text"
-                required
-                class="form-control"
-                placeholder="e.g., Tomatoes"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="sku">SKU</label>
-              <input
-                v-model="formData.sku"
-                id="sku"
-                type="text"
-                class="form-control"
-                placeholder="e.g., VEG001"
-              />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="description">Description</label>
-            <textarea
-              v-model="formData.description"
-              id="description"
-              rows="3"
-              class="form-control"
-              placeholder="Product description"
-            ></textarea>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="quantity">Quantity *</label>
-              <input
-                v-model.number="formData.quantity"
-                id="quantity"
-                type="number"
-                step="0.01"
-                min="0"
-                required
-                class="form-control"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="unit">Unit *</label>
-              <input
-                v-model="formData.unit"
-                id="unit"
-                type="text"
-                required
-                class="form-control"
-                placeholder="kg, liters, pieces..."
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="threshold">Alert Threshold *</label>
-              <input
-                v-model.number="formData.threshold"
-                id="threshold"
-                type="number"
-                step="0.01"
-                min="0"
-                required
-                class="form-control"
-              />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="price_per_unit">Price per Unit (€)</label>
-              <input
-                v-model.number="formData.price_per_unit"
-                id="price_per_unit"
-                type="number"
-                step="0.01"
-                min="0"
-                class="form-control"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="expiration_date">Expiration Date</label>
-              <input
-                v-model="formData.expiration_date"
-                id="expiration_date"
-                type="date"
-                class="form-control"
-              />
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button type="button" @click="closeModal" class="btn btn-secondary">
-              Cancel
-            </button>
-            <button type="submit" class="btn btn-primary" :disabled="isLoading">
-              {{ isLoading ? 'Saving...' : (isEditMode ? 'Update' : 'Add') }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <!-- Universal Form Modal -->
+    <UniversalFormModal
+      :visible="showModal"
+      entity-type="product"
+      :edit-data="editData"
+      @close="closeModal"
+      @success="handleFormSuccess"
+    />
 
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteModal" class="modal" @click.self="showDeleteModal = false">
@@ -288,6 +176,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useProductsStore } from '../store/products'
 import { useAuthStore } from '../store/auth'
+import UniversalFormModal from '../components/UniversalFormModal.vue'
 
 const productsStore = useProductsStore()
 const authStore = useAuthStore()
@@ -306,21 +195,10 @@ const canManage = computed(() => {
 // State
 const showModal = ref(false)
 const showDeleteModal = ref(false)
-const isEditMode = ref(false)
 const productToDelete = ref(null)
+const editData = ref(null)
 const searchQuery = ref('')
 const showLowStockOnly = ref(false)
-
-const formData = ref({
-  name: '',
-  description: '',
-  quantity: 0,
-  unit: 'units',
-  threshold: 10,
-  price_per_unit: null,
-  sku: '',
-  expiration_date: null
-})
 
 // Search debounce
 let searchTimeout = null
@@ -366,23 +244,12 @@ const goToPage = async (page) => {
 }
 
 const openAddModal = () => {
-  isEditMode.value = false
-  formData.value = {
-    name: '',
-    description: '',
-    quantity: 0,
-    unit: 'units',
-    threshold: 10,
-    price_per_unit: null,
-    sku: '',
-    expiration_date: null
-  }
+  editData.value = null
   showModal.value = true
 }
 
 const openEditModal = (product) => {
-  isEditMode.value = true
-  formData.value = {
+  editData.value = {
     id: product.id,
     name: product.name,
     description: product.description || '',
@@ -391,27 +258,22 @@ const openEditModal = (product) => {
     threshold: parseFloat(product.threshold),
     price_per_unit: product.price_per_unit ? parseFloat(product.price_per_unit) : null,
     sku: product.sku || '',
-    expiration_date: product.expiration_date || null
+    expiration_date: product.expiration_date || null,
+    category_id: product.category?.id || null,
+    supplier_id: product.supplier?.id || null
   }
   showModal.value = true
 }
 
 const closeModal = () => {
   showModal.value = false
+  editData.value = null
 }
 
-const handleSubmit = async () => {
-  const result = isEditMode.value
-    ? await productsStore.updateProduct(formData.value.id, formData.value)
-    : await productsStore.createProduct(formData.value)
-
-  if (result.success) {
-    closeModal()
-    // Refresh list if needed
-    if (!isEditMode.value) {
-      await productsStore.fetchProducts()
-    }
-  }
+const handleFormSuccess = async (result) => {
+  // Refresh the product list after successful create/update
+  await productsStore.fetchProducts()
+  closeModal()
 }
 
 const confirmDelete = (product) => {
@@ -689,38 +551,6 @@ tr:hover {
   font-size: 2rem;
   cursor: pointer;
   color: #6c757d;
-}
-
-.product-form .form-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #5a6268;
 }
 
 code {

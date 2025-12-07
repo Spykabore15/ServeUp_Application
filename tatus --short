@@ -1,0 +1,425 @@
+[1mdiff --git a/ServUp-v2/backend/controllers/authController.js b/ServUp-v2/backend/controllers/authController.js[m
+[1mindex 4dce8ed..684d56d 100644[m
+[1m--- a/ServUp-v2/backend/controllers/authController.js[m
+[1m+++ b/ServUp-v2/backend/controllers/authController.js[m
+[36m@@ -87,21 +87,45 @@[m [mconst login = async (req, res) => {[m
+       });[m
+     }[m
+ [m
+[31m-    // Update last login[m
+[31m-    await user.update({ last_login: new Date() });[m
+[32m+[m[32m    // Update last login - use direct update with where clause to avoid reloading[m
+[32m+[m[32m    try {[m
+[32m+[m[32m      await User.update([m
+[32m+[m[32m        { last_login: new Date() },[m
+[32m+[m[32m        { where: { id: user.getDataValue('id') } }[m
+[32m+[m[32m      );[m
+[32m+[m[32m    } catch (updateError) {[m
+[32m+[m[32m      // If update fails, log but don't block login[m
+[32m+[m[32m      console.warn('Failed to update last_login:', updateError.message);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // Get user ID safely[m
+[32m+[m[32m    const userId = user.getDataValue('id');[m
+[32m+[m[32m    const userUsername = user.getDataValue('username');[m
+[32m+[m[32m    const userRole = user.getDataValue('role');[m
+ [m
+     // Generate JWT token[m
+     const token = generateToken({[m
+[31m-      id: user.id,[m
+[31m-      username: user.username,[m
+[31m-      role: user.role[m
+[32m+[m[32m      id: userId,[m
+[32m+[m[32m      username: userUsername,[m
+[32m+[m[32m      role: userRole[m
+     });[m
+ [m
+[32m+[m[32m    // Get user data safely using getDataValue[m
+[32m+[m[32m    const userData = {[m
+[32m+[m[32m      id: userId,[m
+[32m+[m[32m      username: userUsername,[m
+[32m+[m[32m      email: user.getDataValue('email'),[m
+[32m+[m[32m      role: userRole,[m
+[32m+[m[32m      is_active: user.getDataValue('is_active'),[m
+[32m+[m[32m      last_login: new Date(),[m
+[32m+[m[32m      created_at: user.getDataValue('created_at')[m
+[32m+[m[32m    };[m
+[32m+[m
+     res.json({[m
+       status: 'success',[m
+       message: 'Login successful',[m
+       token,[m
+[31m-      user: user.toSafeObject()[m
+[32m+[m[32m      user: userData[m
+     });[m
+   } catch (error) {[m
+     console.error('Login error:', error);[m
+[1mdiff --git a/ServUp-v2/backend/database/seeders/20241121000001-demo-users.js b/ServUp-v2/backend/database/seeders/20241121000001-demo-users.js[m
+[1mindex 2149527..e4fa512 100644[m
+[1m--- a/ServUp-v2/backend/database/seeders/20241121000001-demo-users.js[m
+[1m+++ b/ServUp-v2/backend/database/seeders/20241121000001-demo-users.js[m
+[36m@@ -5,41 +5,76 @@[m [mmodule.exports = {[m
+   up: async (queryInterface, Sequelize) => {[m
+     const salt = await bcrypt.genSalt(10);[m
+     [m
+[32m+[m[32m    // Users linked to employees (employee_id corresponds to position in employees array + 1)[m
+[32m+[m[32m    // Employee 1: Alice Dubois (Manager Général) -> admin user[m
+[32m+[m[32m    // Employee 3: Diana Moreau (Responsable Stocks) -> responsable_stocks user[m
+[32m+[m[32m    // Employee 2: Sophie Laurent (Responsable RH) -> responsable_employes user[m
+[32m+[m[32m    // Employee 11: Emma Bernard (Serveuse) -> employe user[m
+     const users = [[m
+       {[m
+         username: 'admin',[m
+         email: 'admin@servup.com',[m
+         password_hash: await bcrypt.hash('admin123', salt),[m
+         role: 'admin',[m
+[32m+[m[32m        employee_id: 1, // Alice Dubois - Manager Général[m
+         is_active: true,[m
+[31m-        created_at: new Date(),[m
+[32m+[m[32m        last_login: new Date('2024-11-20T10:30:00'),[m
+[32m+[m[32m        created_at: new Date('2020-01-15'),[m
+         updated_at: new Date()[m
+       },[m
+       {[m
+[31m-        username: 'responsable_stocks',[m
+[31m-        email: 'stocks@servup.com',[m
+[32m+[m[32m        username: 'diana.moreau',[m
+[32m+[m[32m        email: 'diana.moreau@servup.com',[m
+         password_hash: await bcrypt.hash('stock123', salt),[m
+         role: 'responsable_stocks',[m
+[32m+[m[32m        employee_id: 3, // Diana Moreau - Responsable Stocks[m
+         is_active: true,[m
+[31m-        created_at: new Date(),[m
+[32m+[m[32m        last_login: new Date('2024-11-21T09:15:00'),[m
+[32m+[m[32m        created_at: new Date('2021-09-15'),[m
+         updated_at: new Date()[m
+       },[m
+       {[m
+[31m-        username: 'responsable_employes',[m
+[31m-        email: 'rh@servup.com',[m
+[32m+[m[32m        username: 'sophie.laurent',[m
+[32m+[m[32m        email: 'sophie.laurent@servup.com',[m
+         password_hash: await bcrypt.hash('hr123', salt),[m
+         role: 'responsable_employes',[m
+[32m+[m[32m        employee_id: 2, // Sophie Laurent - Responsable RH[m
+         is_active: true,[m
+[31m-        created_at: new Date(),[m
+[32m+[m[32m        last_login: new Date('2024-11-21T08:45:00'),[m
+[32m+[m[32m        created_at: new Date('2020-08-01'),[m
+         updated_at: new Date()[m
+       },[m
+       {[m
+[31m-        username: 'employe',[m
+[31m-        email: 'employe@servup.com',[m
+[32m+[m[32m        username: 'emma.bernard',[m
+[32m+[m[32m        email: 'emma.bernard@servup.com',[m
+         password_hash: await bcrypt.hash('emp123', salt),[m
+         role: 'employe',[m
+[32m+[m[32m        employee_id: 11, // Emma Bernard - Serveuse[m
+         is_active: true,[m
+[31m-        created_at: new Date(),[m
+[32m+[m[32m        last_login: new Date('2024-11-21T12:00:00'),[m
+[32m+[m[32m        created_at: new Date('2023-01-10'),[m
+[32m+[m[32m        updated_at: new Date()[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        username: 'bob.martin',[m
+[32m+[m[32m        email: 'bob.martin@servup.com',[m
+[32m+[m[32m        password_hash: await bcrypt.hash('chef123', salt),[m
+[32m+[m[32m        role: 'employe',[m
+[32m+[m[32m        employee_id: 4, // Bob Martin - Chef Cuisinier[m
+[32m+[m[32m        is_active: true,[m
+[32m+[m[32m        last_login: new Date('2024-11-20T07:00:00'),[m
+[32m+[m[32m        created_at: new Date('2021-03-10'),[m
+[32m+[m[32m        updated_at: new Date()[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        username: 'charlie.durand',[m
+[32m+[m[32m        email: 'charlie.durand@servup.com',[m
+[32m+[m[32m        password_hash: await bcrypt.hash('serveur123', salt),[m
+[32m+[m[32m        role: 'employe',[m
+[32m+[m[32m        employee_id: 10, // Charlie Durand - Serveur Principal (on leave)[m
+[32m+[m[32m        is_active: true,[m
+[32m+[m[32m        last_login: new Date('2024-11-15T14:20:00'),[m
+[32m+[m[32m        created_at: new Date('2022-06-01'),[m
+         updated_at: new Date()[m
+       }[m
+     ];[m
+[1mdiff --git a/ServUp-v2/backend/database/seeders/20241121000002-demo-categories.js b/ServUp-v2/backend/database/seeders/20241121000002-demo-categories.js[m
+[1mindex 55b32b9..a8ea950 100644[m
+[1m--- a/ServUp-v2/backend/database/seeders/20241121000002-demo-categories.js[m
+[1m+++ b/ServUp-v2/backend/database/seeders/20241121000002-demo-categories.js[m
+[36m@@ -4,29 +4,54 @@[m [mmodule.exports = {[m
+   up: async (queryInterface, Sequelize) => {[m
+     const categories = [[m
+       {[m
+[31m-        name: 'Légumes',[m
+[31m-        description: 'Légumes frais et bio',[m
+[31m-        created_at: new Date()[m
+[32m+[m[32m        name: 'Légumes et Fruits',[m
+[32m+[m[32m        description: 'Légumes et fruits frais, bio et de saison',[m
+[32m+[m[32m        created_at: new Date('2024-01-01')[m
+       },[m
+       {[m
+[31m-        name: 'Viandes',[m
+[31m-        description: 'Viandes et volailles',[m
+[31m-        created_at: new Date()[m
+[32m+[m[32m        name: 'Viandes et Volailles',[m
+[32m+[m[32m        description: 'Viandes de boucherie, volailles, charcuteries',[m
+[32m+[m[32m        created_at: new Date('2024-01-01')[m
+       },[m
+       {[m
+[31m-        name: 'Boissons',[m
+[31m-        description: 'Boissons alcoolisées et non-alcoolisées',[m
+[31m-        created_at: new Date()[m
+[32m+[m[32m        name: 'Poissons et Fruits de Mer',[m
+[32m+[m[32m        description: 'Poissons frais, fruits de mer, crustacés',[m
+[32m+[m[32m        created_at: new Date('2024-01-01')[m
+       },[m
+       {[m
+         name: 'Produits Laitiers',[m
+[31m-        description: 'Fromages, lait, beurre',[m
+[31m-        created_at: new Date()[m
+[32m+[m[32m        description: 'Fromages, lait, beurre, crème fraîche',[m
+[32m+[m[32m        created_at: new Date('2024-01-01')[m
+       },[m
+       {[m
+         name: 'Pains et Pâtisseries',[m
+[31m-        description: 'Pains, viennoiseries et pâtisseries',[m
+[31m-        created_at: new Date()[m
+[32m+[m[32m        description: 'Pains artisanaux, viennoiseries, pâtisseries',[m
+[32m+[m[32m        created_at: new Date('2024-01-01')[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        name: 'Boissons',[m
+[32m+[m[32m        description: 'Boissons alcoolisées et non-alcoolisées, eaux, sodas, vins',[m
+[32m+[m[32m        created_at: new Date('2024-01-01')[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        name: 'Épices et Condiments',[m
+[32m+[m[32m        description: 'Épices, herbes aromatiques, condiments, huiles',[m
+[32m+[m[32m        created_at: new Date('2024-01-01')[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        name: 'Produits Surgelés',[m
+[32m+[m[32m        description: 'Produits surgelés divers, frites, glaces',[m
+[32m+[m[32m        created_at: new Date('2024-01-01')[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        name: 'Conserves et Produits Secs',[m
+[32m+[m[32m        description: 'Conserves, pâtes, riz, légumineuses',[m
+[32m+[m[32m        created_at: new Date('2024-01-01')[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        name: 'Nettoyage et Entretien',[m
+[32m+[m[32m        description: 'Produits de nettoyage, entretien de cuisine',[m
+[32m+[m[32m        created_at: new Date('2024-01-01')[m
+       }[m
+     ];[m
+ [m
+[1mdiff --git a/ServUp-v2/backend/database/seeders/20241121000003-demo-suppliers.js b/ServUp-v2/backend/database/seeders/20241121000003-demo-suppliers.js[m
+[1mindex 5b6a864..fd42cad 100644[m
+[1m--- a/ServUp-v2/backend/database/seeders/20241121000003-demo-suppliers.js[m
+[1m+++ b/ServUp-v2/backend/database/seeders/20241121000003-demo-suppliers.js[m
+[36m@@ -4,28 +4,28 @@[m [mmodule.exports = {[m
+   up: async (queryInterface, Sequelize) => {[m
+     const suppliers = [[m
+       {[m
+[31m-        name: 'Ferme de la Vallée',[m
+[32m+[m[32m        name: 'Ferme Bio de la Vallée',[m
+         contact_person: 'Jean Dupont',[m
+         email: 'jean.dupont@fermevallee.com',[m
+         phone: '0123456789',[m
+         address: '1 Rue de la Ferme, 75000 Campagne',[m
+[31m-        products_offered: 'Légumes bio, Fruits de saison, Tomates, Salades',[m
+[32m+[m[32m        products_offered: 'Légumes bio, Fruits de saison, Salades, Herbes aromatiques',[m
+         rating: 5,[m
+         is_active: true,[m
+[31m-        created_at: new Date(),[m
+[31m-        updated_at: new Date()[m
+[32m+[m[32m        created_at: new Date('2024-01-01'),[m
+[32m+[m[32m        updated_at: new Date('2024-01-01')[m
+       },[m
+       {[m
+[31m-        name: 'Boulangerie du Coin',[m
+[32m+[m[32m        name: 'Boulangerie Artisanale du Quartier',[m
+         contact_person: 'Marie Claire',[m
+[31m-        email: 'contact@boulangerieducoin.fr',[m
+[32m+[m[32m        email: 'contact@boulangerie-quartier.fr',[m
+         phone: '0987654321',[m
+         address: '12 Avenue du Pain, 75010 Paris',[m
+[31m-        products_offered: 'Pains artisanaux, Viennoiseries, Pains burger',[m
+[32m+[m[32m        products_offered: 'Pains artisanaux, Viennoiseries, Pains burger, Croissants',[m
+         rating: 4,[m
+         is_active: true,[m
+[31m-        created_at: new Date(),[m
+[31m-        updated_at: new Date()[m
+[32m+[m[32m        created_at: new Date('2024-01-01'),[m
+[32m+[m[32m        updated_at: new Date('2024-01-01')[m
+       },[m
+       {[m
+         name: 'Grossiste Boissons Express',[m
+[36m@@ -33,23 +33,95 @@[m [mmodule.exports = {[m
+         email: 'commercial@boissonsexpress.com',[m
+         phone: '0102030405',[m
+         address: 'Zone Industrielle Sud, 93000 Bobigny',[m
+[31m-        products_offered: 'Sodas, Jus de fruits, Bières, Vins',[m
+[32m+[m[32m        products_offered: 'Sodas, Jus de fruits, Bières, Vins, Eaux minérales',[m
+         rating: 4,[m
+         is_active: true,[m
+[31m-        created_at: new Date(),[m
+[31m-        updated_at: new Date()[m
+[32m+[m[32m        created_at: new Date('2024-01-01'),[m
+[32m+[m[32m        updated_at: new Date('2024-01-01')[m
+       },[m
+       {[m
+[31m-        name: 'Viandes Premium',[m
+[32m+[m[32m        name: 'Boucherie Premium Martin',[m
+         contact_person: 'Pierre Martin',[m
+[31m-        email: 'contact@viandespremium.fr',[m
+[32m+[m[32m        email: 'contact@viandes-premium.fr',[m
+         phone: '0145678901',[m
+         address: '5 Rue des Bouchers, 75015 Paris',[m
+[31m-        products_offered: 'Bœuf, Poulet, Porc, Steaks hachés',[m
+[32m+[m[32m        products_offered: 'Bœuf, Poulet fermier, Porc, Steaks hachés, Charcuteries',[m
+         rating: 5,[m
+         is_active: true,[m
+[31m-        created_at: new Date(),[m
+[31m-        updated_at: new Date()[m
+[32m+[m[32m        created_at: new Date('2024-01-01'),[m
+[32m+[m[32m        updated_at: new Date('2024-01-01')[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        name: 'Poissonnerie Mer du Nord',[m
+[32m+[m[32m        contact_person: 'Sophie Leclerc',[m
+[32m+[m[32m        email: 'commercial@mer-nord.fr',[m
+[32m+[m[32m        phone: '0167890123',[m
+[32m+[m[32m        address: '15 Boulevard de la Mer, 13008 Marseille',[m
+[32m+[m[32m        products_offered: 'Poissons frais, Fruits de mer, Crustacés, Coquillages',[m
+[32m+[m[32m        rating: 4,[m
+[32m+[m[32m        is_active: true,[m
+[32m+[m[32m        created_at: new Date('2024-01-15'),[m
+[32m+[m[32m        updated_at: new Date('2024-01-15')[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        name: 'Fromagerie Affinée Dubois',[m
+[32m+[m[32m        contact_person: 'Claude Dubois',[m
+[32m+[m[32m        email: 'info@fromagerie-dubois.fr',[m
+[32m+[m[32m        phone: '0178901234',[m
+[32m+[m[32m        address: '8 Rue des Fromages, 69001 Lyon',[m
+[32m+[m[32m        products_offered: 'Fromages affinés, Beurre, Crème fraîche, Yaourts',[m
+[32m+[m[32m        rating: 5,[m
+[32m+[m[32m        is_active: true,[m
+[32m+[m[32m        created_at: new Date('2024-01-01'),[m
+[32m+[m[32m        updated_at: new Date('2024-01-01')[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        name: 'Épices et Saveurs du Monde',[m
+[32m+[m[32m        contact_person: 'Ahmed Benali',[m
+[32m+[m[32m        email: 'ventes@epices-saveurs.com',[m
+[32m+[m[32m        phone: '0189012345',[m
+[32m+[m[32m        address: '22 Rue des Épices, 75003 Paris',[m
+[32m+[m[32m        products_offered: 'Épices, Herbes aromatiques, Condiments, Huiles',[m
+[32m+[m[32m        rating: 4,[m
+[32m+[m[32m        is_active: true,[m
+[32m+[m[32m        created_at: new Date('2024-02-01'),[m
+[32m+[m[32m        updated_at: new Date('2024-02-01')[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        name: 'Frozen Foods Distribution',[m
+[32m+[m[32m        contact_person: 'Thomas Moreau',[m
+[32m+[m[32m        email: 'contact@frozen-foods.fr',[m
+[32m+[m[32m        phone: '0190123456',[m
+[32m+[m[32m        address: 'Zone Logistique Nord, 95300 Pontoise',[m
+[32m+[m[32m        products_offered: 'Produits surgelés, Frites, Légumes surgelés, Glaces',[m
+[32m+[m[32m        rating: 3,[m
+[32m+[m[32m        is_active: true,[m
+[32m+[m[32m        created_at: new Date('2024-01-20'),[m
+[32m+[m[32m        updated_at: new Date('2024-01-20')[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        name: 'Distriboissons & Conserves',[m
+[32m+[m[32m        contact_person: 'Laurence Petit',[m
+[32m+[m[32m        email: 'commercial@distriboissons.fr',[m
+[32m+[m[32m        phone: '0112345678',[m
+[32m+[m[32m        address: 'Avenue Industrielle, 59200 Tourcoing',[m
+[32m+[m[32m        products_offered: 'Conserves, Pâtes, Riz, Légumineuses, Produits secs',[m
+[32m+[m[32m        rating: 4,[m
+[32m+[m[32m        is_active: true,[m
+[32m+[m[32m        created_at: new Date('2024-01-10'),[m
+[32m+[m[32m        updated_at: new Date('2024-01-10')[m
+[32m+[m[32m      },[m
+[32m+[m[32m      {[m
+[32m+[m[32m        name: 'Hygiène Pro Restaurants',[m
+[32m+[m[32m        contact_person: 'Julie Bernard',[m
+[32m+[m[32m        email: 'info@hygiene-pro.fr',[m
+[32m+[m[32m        phone: '0123456789',[m
+[32m+[m[32m        address: 'Parc d\'Activités Commercial, 31000 Toulouse',[m
+[32m+[m[32m        products_offered: 'Produits de nettoyage professionnels, Entretien cuisine',[m
+[32m+[m[32m        rating: 4,[m
+[32m+[m[32m        is_active: true,[m
+[32m+[m[32m        created_at: new Date('2024-01-05'),[m
+[32m+[m[32m        updated_at: new Date('2024-01-05')[m
+       }[m
+     ];[m
+ [m
+[1mdiff --git a/ServUp-v2/backend/database/seeders/20241121000004-demo-employees.js b/ServUp-v2/backend/database/seeders/20241121000004-demo-employees.js[m
+[1mindex a88d54c..817ac19 100644[m
+[1m--- a/ServUp-v2/backend/database/seeders/20241121000004-demo-employees.js[m
+[1m+++ b/ServUp-v2/backend/database/seeders/20241121000004-demo-employees.js[m
+[36m@@ -2,41 +2,42 @@[m
+ [m
+ module.exports = {[m
+   up: async (queryInterface, Sequelize) => {[m
+[32m+[m[32m    // Base date for calculations[m
+[32m+[m[32m    const now = new Date();[m
+[32m+[m[32m    const getDate = (monthsAgo) => {[m
+[32m+[m[32m      const date = new Date(now);[m
+[32m+[m[32m      date.setMonth(date.getMonth() - monthsAgo);[m
+[32m+[m[32m      return date.toISOString().split('T')[0];[m
+[32m+[m[32m    };[m
+[32m+[m
+     const employees = [[m
+[32m+[m[32m      // Management[m
+       {[m
+         first_name: 'Alice',[m
+         last_name: 'Dubois',[m
+         position: 'Manager Général',[m
+         email: 'alice.dubois@servup.com',[m
+         phone: '0612345678',[m
+[32m+[m[32m        address: '12 Avenue de la République, 75011 Paris',[m
+[32m+[m[32m        emergency_contact: 'Pierre Dubois - 0611111111',[m
+         hire_date: '2020-01-15',[m
+         status: 'active',[m
+[31m-        salary: 3500.00,[m
+[31m-        created_at: new Date(),[m
+[32m+[m[32m        salary: 4200.00,[m
+[32m+[m[32m        created_at: new Date('2020-01-15'),[m
+         updated_at: new Date()[m
+       },[m
+       {[m
+[31m-        first_name: 'Bob',[m
+[31m-        last_name: 'Martin',[m
+[31m-        position: 'Chef Cuisinier',[m
+[31m-        email: 'bob.martin@servup.com',[m
+[31m-        phone: '0623456789',[m
+[31m-        hire_date: '2021-03-10',[m
+[32m+[m[32m        first_name: 'Sophie',[m
+[32m+[m[32m        last_name: 'Laurent',[m
+[32m+[m[32m        position: 'Responsable RH',[m
+[32m+[m[32m        email: 'sophie.laurent@servup.com',[m
+[32m+[m[32m        phone: '0678901234',[m
+[32m+[m[32m        address: '45 Rue de la Paix, 75002 Paris',[m
+[32m+[m[32m        emergency_contact: 'Marc Laurent - 0622222222',[m
+[32m+[m[32m        hire_date: '2020-08-01',[m
+         status: 'active',[m
+[31m-        salary: 2800.00,[m
+[31m-        created_at: new Date(),[m
+[31m-        updated_at: new Date()[m
+[31m-      },[m
+[31m-      {[m
+[31m-        first_name: 'Charlie',[m
+[31m-        last_name: 'Durand',[m
+[31m-        position: 'Serveur',[m
+[31m-        email: 'charlie.durand@servup.com',[m
+[31m-        phon

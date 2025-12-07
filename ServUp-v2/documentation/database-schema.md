@@ -13,6 +13,7 @@
 7. **order_items** - Items within each order
 8. **waste_records** - Tracking wasted products
 9. **audit_logs** - System activity tracking
+10. **access_requests** - User access request management
 
 ---
 
@@ -50,8 +51,10 @@ Restaurant staff information.
 | email | VARCHAR(100) | UNIQUE, NULL | Employee email |
 | phone | VARCHAR(20) | NULL | Contact phone number |
 | hire_date | DATE | NOT NULL | Date of hire |
-| status | ENUM | NOT NULL | active, on_leave, terminated |
+| status | ENUM | NOT NULL, DEFAULT 'active' | active, inactive, on_leave |
 | salary | DECIMAL(10,2) | NULL | Monthly salary (optional) |
+| address | VARCHAR(255) | NULL | Employee address |
+| emergency_contact | VARCHAR(255) | NULL | Emergency contact information |
 | created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Record creation date |
 | updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP ON UPDATE | Last update |
 
@@ -196,6 +199,28 @@ System activity tracking for security and debugging.
 
 ---
 
+### 10. access_requests
+User access request management for new account approvals.
+
+| Column | Type | Constraints | Description |
+|--------|------|------------|-------------|
+| id | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique request ID |
+| full_name | VARCHAR(100) | NOT NULL | Requester's full name |
+| email | VARCHAR(100) | NOT NULL | Requester's email address |
+| phone | VARCHAR(20) | NULL | Contact phone number |
+| requested_role | ENUM | NOT NULL, DEFAULT 'employe' | Requested role (admin, responsable_stocks, responsable_employes, employe) |
+| reason | TEXT | NULL | Reason for access request |
+| status | ENUM | NOT NULL, DEFAULT 'pending' | Request status (pending, approved, denied) |
+| reviewed_by | INTEGER | FOREIGN KEY → users(id), NULL | Admin who reviewed the request |
+| reviewed_at | TIMESTAMP | NULL | Review timestamp |
+| review_notes | TEXT | NULL | Admin's review notes |
+| created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Request creation date |
+| updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP ON UPDATE | Last update timestamp |
+
+**Indexes:** status, email, reviewed_by, created_at
+
+---
+
 ## Relationships
 
 ### One-to-Many
@@ -207,6 +232,7 @@ System activity tracking for security and debugging.
 - `products` → `waste_records` (one product can have many waste records)
 - `employees` → `waste_records` (one employee can report many waste records)
 - `users` → `audit_logs` (one user generates many log entries)
+- `users` → `access_requests` (one user can review many access requests)
 
 ### One-to-One
 - `users` → `employees` (optional: a user account can be linked to an employee record)
@@ -225,6 +251,7 @@ products (1) ←→ (0..*) order_items
 products (1) ←→ (0..*) waste_records
 employees (1) ←→ (0..*) waste_records
 users (1) ←→ (0..*) audit_logs
+users (1) ←→ (0..*) access_requests
 ```
 
 ---
@@ -234,10 +261,11 @@ users (1) ←→ (0..*) audit_logs
 1. **Cascading Deletes:**
    - When an order is deleted, all its order_items are deleted
    - When a user is deleted, their audit logs remain (set user_id to NULL)
+   - When a user is deleted, access requests they reviewed remain (set reviewed_by to NULL)
 
 2. **Soft Deletes:**
    - Users, products, suppliers use `is_active` flag instead of hard delete
-   - Employees use `status = 'terminated'` instead of deletion
+   - Employees use `status = 'inactive'` instead of deletion
 
 3. **Required Foreign Keys:**
    - order_items MUST have a valid order_id

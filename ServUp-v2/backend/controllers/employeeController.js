@@ -57,10 +57,11 @@ const getAllEmployees = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching employees:', error);
+    console.error('Stack trace:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Error fetching employees',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 };

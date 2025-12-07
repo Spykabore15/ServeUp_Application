@@ -1,5 +1,8 @@
 const { User } = require('../models');
 const { generateToken } = require('../config/jwt');
+const { sendSuccess, sendError, sendUnauthorized, sendValidationError, sendInternalError } = require('../utils/responseHandler');
+const { createAuditLog, auditActions } = require('../middleware/auditLog');
+const logger = require('../utils/logger');
 
 // Register new user
 const register = async (req, res) => {
@@ -17,10 +20,7 @@ const register = async (req, res) => {
     });
 
     if (existingUser) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Username or email already exists'
-      });
+      return sendError(res, 'Username or email already exists', 400);
     }
 
     // Create new user (password will be hashed by model hook)
@@ -38,19 +38,15 @@ const register = async (req, res) => {
       role: user.role
     });
 
-    res.status(201).json({
-      status: 'success',
-      message: 'User registered successfully',
+    logger.info('User registered successfully', { userId: user.id, username: user.username });
+    
+    sendSuccess(res, {
       token,
       user: user.toSafeObject()
-    });
+    }, 'User registered successfully', 201);
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to register user',
-      error: error.message
-    });
+    logger.error('Registration error', { error: error.message, stack: error.stack });
+    sendInternalError(res);
   }
 };
 
@@ -63,28 +59,22 @@ const login = async (req, res) => {
     const user = await User.findByLogin(username);
 
     if (!user) {
-      return res.status(401).json({
-        status: 'error',
-        message: 'Invalid credentials'
-      });
+      logger.warn('Login attempt failed: User not found', { username });
+      return sendUnauthorized(res, 'Invalid credentials');
     }
 
     // Check if user is active
     if (!user.is_active) {
-      return res.status(403).json({
-        status: 'error',
-        message: 'Account is deactivated'
-      });
+      logger.warn('Login attempt failed: Account deactivated', { userId: user.id, username });
+      return sendError(res, 'Account is deactivated', 403);
     }
 
     // Verify password
     const isPasswordValid = await user.comparePassword(password);
 
     if (!isPasswordValid) {
-      return res.status(401).json({
-        status: 'error',
-        message: 'Invalid credentials'
-      });
+      logger.warn('Login attempt failed: Invalid password', { userId: user.id, username });
+      return sendUnauthorized(res, 'Invalid credentials');
     }
 
     // Update last login
@@ -97,19 +87,18 @@ const login = async (req, res) => {
       role: user.role
     });
 
-    res.json({
-      status: 'success',
-      message: 'Login successful',
+    logger.info('User logged in successfully', { userId: user.id, username: user.username });
+    
+    // Create audit log for login
+    await createAuditLog(req, auditActions.LOGIN, 'users', user.id, null, { username: user.username });
+    
+    sendSuccess(res, {
       token,
       user: user.toSafeObject()
-    });
+    }, 'Login successful');
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Login failed',
-      error: error.message
-    });
+    logger.error('Login error', { error: error.message, stack: error.stack });
+    sendInternalError(res);
   }
 };
 
@@ -118,17 +107,17 @@ const logout = async (req, res) => {
   try {
     // In JWT, logout is handled client-side by removing the token
     // Here we can log the action or perform cleanup if needed
-    res.json({
-      status: 'success',
-      message: 'Logout successful'
-    });
+    if (req.user) {
+      logger.info('User logged out', { userId: req.user.id, username: req.user.username });
+      
+      // Create audit log for logout
+      await createAuditLog(req, auditActions.LOGOUT, 'users', req.user.id);
+    }
+    
+    sendSuccess(res, null, 'Logout successful');
   } catch (error) {
-    console.error('Logout error:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Logout failed',
-      error: error.message
-    });
+    logger.error('Logout error', { error: error.message, stack: error.stack });
+    sendInternalError(res);
   }
 };
 
@@ -139,23 +128,13 @@ const getCurrentUser = async (req, res) => {
     const user = await User.findByPk(req.user.id);
 
     if (!user) {
-      return res.status(404).json({
-        status: 'error',
-        message: 'User not found'
-      });
+      return sendError(res, 'User not found', 404);
     }
 
-    res.json({
-      status: 'success',
-      user: user.toSafeObject()
-    });
+    sendSuccess(res, { user: user.toSafeObject() });
   } catch (error) {
-    console.error('Get current user error:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to get user',
-      error: error.message
-    });
+    logger.error('Get current user error', { error: error.message, stack: error.stack, userId: req.user?.id });
+    sendInternalError(res);
   }
 };
 
@@ -166,36 +145,32 @@ const changePassword = async (req, res) => {
     const user = await User.findByPk(req.user.id);
 
     if (!user) {
-      return res.status(404).json({
-        status: 'error',
-        message: 'User not found'
-      });
+      return sendError(res, 'User not found', 404);
     }
 
     // Verify old password
     const isPasswordValid = await user.comparePassword(oldPassword);
 
     if (!isPasswordValid) {
-      return res.status(401).json({
-        status: 'error',
-        message: 'Current password is incorrect'
-      });
+      logger.warn('Password change failed: Incorrect current password', { userId: req.user.id });
+      return sendUnauthorized(res, 'Current password is incorrect');
     }
 
+    // Store old values for audit log
+    const oldValues = { password_hash: '***' }; // Don't log actual password
+    
     // Update password (will be hashed by beforeUpdate hook)
     await user.update({ password_hash: newPassword });
 
-    res.json({
-      status: 'success',
-      message: 'Password changed successfully'
-    });
+    logger.info('Password changed successfully', { userId: req.user.id });
+    
+    // Create audit log for password change
+    await createAuditLog(req, auditActions.PASSWORD_CHANGE, 'users', req.user.id, oldValues, { password_hash: '***' });
+    
+    sendSuccess(res, null, 'Password changed successfully');
   } catch (error) {
-    console.error('Change password error:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to change password',
-      error: error.message
-    });
+    logger.error('Change password error', { error: error.message, stack: error.stack, userId: req.user?.id });
+    sendInternalError(res);
   }
 };
 
